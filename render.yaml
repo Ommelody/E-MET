@@ -1,0 +1,12 @@
+# Render.com blueprint — deploy ทั้ง frontend + backend เป็นบริการเดียว
+# วิธีใช้: Render Dashboard -> New -> Blueprint -> เลือก repo นี้
+services:
+  - type: web
+    name: thamc-e-material
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
