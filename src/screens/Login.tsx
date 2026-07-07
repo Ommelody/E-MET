@@ -123,8 +123,8 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
 
         <div className="relative flex gap-7">
           {[
-            ["3", "ระดับอนุมัติ"],
-            ["9", "โมดูลใช้งาน"],
+            ["2", "ระดับอนุมัติ"],
+            ["11", "โมดูลใช้งาน"],
             ["100%", "ตรวจสอบย้อนหลัง"],
           ].map(([n, l], i) => (
             <div key={i} className="flex items-center gap-7">
@@ -146,7 +146,7 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           <div className="w-full max-w-[400px]">
             <div className="mb-6 text-center">
               <h2 className="m-0 mb-1.5 text-2xl font-bold tracking-tight" style={{ color: "#171438" }}>
-                {isLogin ? "ยินดีต้อนรับกลับ" : "สร้างบัญชีผู้ใช้"}
+                {isLogin ? "ยินดีต้อนรับ" : "สร้างบัญชีผู้ใช้"}
               </h2>
               <p className="m-0 text-[13.5px]" style={{ color: "#7c799a" }}>
                 {isLogin ? "ลงชื่อเข้าใช้เพื่อจัดการคลังพัสดุ" : "ลงทะเบียนเพื่อเริ่มเบิกจ่ายพัสดุ"}
