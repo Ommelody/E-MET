@@ -75,6 +75,11 @@ async function getRequisitions(filters: any, username: string, role: string) {
   let q = db.from("requisitions").select("*").order("created_at", { ascending: false });
 
   if (role && !STAFF_ROLES.includes(role)) q = q.eq("requested_by", username);
+  // ค้นหาแบบกว้าง: เลขที่ / ชื่อผู้เบิก / วัตถุประสงค์ / แผนก
+  if (filters.q && filters.q.trim()) {
+    const s = filters.q.trim();
+    q = q.or(`id.ilike.%${s}%,requestor_name.ilike.%${s}%,purpose.ilike.%${s}%,requestor_department.ilike.%${s}%`);
+  }
   if (filters.id) q = q.ilike("id", `%${filters.id}%`);
   if (filters.requestorName) q = q.ilike("requestor_name", `%${filters.requestorName}%`);
   if (filters.department && filters.department.trim() && filters.department !== "-- All --")

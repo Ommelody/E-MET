@@ -9,13 +9,18 @@ export default function History({ user }: { user: User }) {
   const toast = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ id: "", status: "", startDate: "", endDate: "" });
+  const [filters, setFilters] = useState({ q: "", department: "", status: "", startDate: "", endDate: "" });
   const [detail, setDetail] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deptOptions, setDeptOptions] = useState<string[]>([]);
 
   const load = () => {
     setLoading(true);
-    requisitionApi.list(filters, user).then(setRows).catch((e) => toast.push({ type: "error", msg: e.message })).finally(() => setLoading(false));
+    requisitionApi.list(filters, user).then((r) => {
+      setRows(r);
+      // สะสมรายชื่อหน่วยงานที่พบ เพื่อใช้เป็นตัวเลือกกรอง
+      setDeptOptions((prev) => [...new Set([...prev, ...r.map((x: any) => x.requestorDepartment).filter(Boolean)])].sort());
+    }).catch((e) => toast.push({ type: "error", msg: e.message })).finally(() => setLoading(false));
   };
   useEffect(load, []);
 
@@ -33,17 +38,22 @@ export default function History({ user }: { user: User }) {
 
       <Card className="mb-4 p-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="relative min-w-[180px] flex-1">
+          <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input className={inputClass + " pl-9"} placeholder="ค้นหาเลขที่ใบเบิก" value={filters.id} onChange={(e) => setFilters({ ...filters, id: e.target.value })} />
+            <input className={inputClass + " pl-9"} placeholder="ค้นหา เลขที่ใบเบิก / ชื่อผู้เบิก / วัตถุประสงค์ / หน่วยงาน" value={filters.q}
+              onChange={(e) => setFilters({ ...filters, q: e.target.value })} onKeyDown={(e) => e.key === "Enter" && load()} />
           </div>
-          <select className={inputClass + " max-w-[200px]"} value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
+          <select className={inputClass + " max-w-[220px]"} value={filters.department} onChange={(e) => setFilters({ ...filters, department: e.target.value })}>
+            <option value="">ทุกหน่วยงาน</option>
+            {deptOptions.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select className={inputClass + " max-w-[180px]"} value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
             <option value="">ทุกสถานะ</option>
             {Object.keys(STATUS_LABELS).map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
           </select>
           <input type="date" className={inputClass + " max-w-[160px]"} value={filters.startDate} onChange={(e) => setFilters({ ...filters, startDate: e.target.value })} />
           <input type="date" className={inputClass + " max-w-[160px]"} value={filters.endDate} onChange={(e) => setFilters({ ...filters, endDate: e.target.value })} />
-          <Button onClick={load}>ค้นหา</Button>
+          <Button onClick={load}><Search className="h-4 w-4" />ค้นหา</Button>
         </div>
       </Card>
 
