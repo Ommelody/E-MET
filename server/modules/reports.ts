@@ -365,3 +365,49 @@ reportsRouter.get("/goodIssueSAP", async (req, res) => {
     res.json({ rows });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── รายงานความเคลื่อนไหวสต๊อก (Stock Movement) ─────────────────
+reportsRouter.get("/stockMovement", async (req, res) => {
+  try {
+    const f = req.query as any;
+    const logs = await fetchAll(
+      "transaction_logs",
+      "transaction_id,timestamp,type,reference_no,item_code,item_name,quantity_change,unit,unit_price,value_change,new_stock_quantity,received_by,notes,source",
+      (q) => {
+        let x = q.order("timestamp", { ascending: false });
+        if (f.startDate) x = x.gte("timestamp", new Date(f.startDate).toISOString());
+        if (f.endDate) { const e = new Date(f.endDate); e.setHours(23, 59, 59, 999); x = x.lte("timestamp", e.toISOString()); }
+        if (f.type && f.type !== "-- All --") x = x.eq("type", f.type);
+        return x;
+      }
+    );
+    const rows = logs
+      .filter((l: any) => !f.query || (l.item_code || "").toLowerCase().includes(String(f.query).toLowerCase()) || (l.item_name || "").toLowerCase().includes(String(f.query).toLowerCase()))
+      .map((l: any) => ({
+        timestamp: l.timestamp, type: l.type, isReceipt: l.type === "Goods Receipt",
+        itemCode: l.item_code, itemName: l.item_name, quantityChange: l.quantity_change, unit: l.unit,
+        unitPrice: l.unit_price, valueChange: l.value_change, newStockQuantity: l.new_stock_quantity,
+        referenceNo: l.reference_no, receivedBy: l.received_by, notes: l.notes, source: l.source,
+      }));
+    res.json(rows);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── รายงานยอดพัสดุคงเหลือปัจจุบัน (Stock On-hand) ───────────────
+reportsRouter.get("/stockOnhand", async (req, res) => {
+  try {
+    const f = req.query as any;
+    const inv = await fetchAll("inventory", "code,name,category,unit,quantity,min_quantity,unit_price,location");
+    const rows = inv
+      .filter((i: any) => !f.category || f.category === "-- ทั้งหมด --" || (i.category || "").trim() === String(f.category).trim())
+      .filter((i: any) => !f.query || (i.code || "").toLowerCase().includes(String(f.query).toLowerCase()) || (i.name || "").toLowerCase().includes(String(f.query).toLowerCase()))
+      .sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""))
+      .map((i: any) => ({
+        code: i.code, name: i.name, category: i.category || "", location: i.location || "",
+        quantity: i.quantity || 0, unit: i.unit || "", minQuantity: i.min_quantity || 0,
+        unitPrice: i.unit_price || 0, totalValue: (i.quantity || 0) * (i.unit_price || 0),
+        status: (i.quantity || 0) <= (i.min_quantity || 0) ? "ต่ำกว่าขั้นต่ำ" : "ปกติ",
+      }));
+    res.json(rows);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});

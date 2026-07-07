@@ -14,6 +14,8 @@ const REPORT_TYPES = [
   { id: "fulfilledBackorders", name: "5. จัดจ่ายค้างจ่ายแล้ว", dated: true },
   { id: "dailyRequisition", name: "6. สรุปใบเบิกจ่ายรายวัน (Daily Log)", dated: true },
   { id: "inventoryStock", name: "7. พัสดุในคลังทั้งหมด (Stock balance)", dated: false },
+  { id: "stockMovement", name: "8. ความเคลื่อนไหวสต๊อก (Stock Movement)", dated: true },
+  { id: "stockOnhand", name: "9. ยอดคงเหลือปัจจุบัน (Stock On-hand)", dated: false },
 ];
 
 // นิยาม header + วิธี map แต่ละ row เป็น array cell ของแต่ละรายงาน
@@ -45,6 +47,14 @@ const SPEC: Record<string, { headers: string[]; map: (r: any) => any[] }> = {
   inventoryStock: {
     headers: ["ID", "รหัส", "ชื่อวัสดุ", "หมวดหมู่", "ที่ตั้ง", "คงเหลือ", "หน่วย", "Min Stock", "ราคา/หน่วย", "มูลค่ารวม", "อัปเดตล่าสุด"],
     map: (r) => [r["ID"], r["รหัส"], r["ชื่อวัสดุ"], r["หมวดหมู่"], r["ที่ตั้ง"], r["คงเหลือ"], r["หน่วย"], r["Min Stock"], fmtBaht(r["ราคา/หน่วย"]), fmtBaht(r["มูลค่ารวม"]), fmtDateTime(r["อัปเดตล่าสุด"])],
+  },
+  stockMovement: {
+    headers: ["เวลา", "ประเภท", "รหัสพัสดุ", "ชื่อพัสดุ", "เปลี่ยนแปลง", "หน่วย", "คงเหลือ", "อ้างอิง", "โดย/รับโดย", "หมายเหตุ"],
+    map: (r) => [fmtDateTime(r.timestamp), r.isReceipt ? "รับเข้า" : "จ่ายออก", r.itemCode, r.itemName, `${r.quantityChange > 0 ? "+" : ""}${r.quantityChange} ${r.unit}`, r.unit, r.newStockQuantity, r.referenceNo, r.receivedBy, r.notes],
+  },
+  stockOnhand: {
+    headers: ["รหัส", "ชื่อวัสดุ", "หมวดหมู่", "ที่ตั้ง", "คงเหลือ", "หน่วย", "Min Stock", "ราคา/หน่วย", "มูลค่ารวม", "สถานะ"],
+    map: (r) => [r.code, r.name, r.category, r.location, `${fmtNumber(r.quantity)}`, r.unit, fmtNumber(r.minQuantity), fmtBaht(r.unitPrice), fmtBaht(r.totalValue), r.status],
   },
 };
 

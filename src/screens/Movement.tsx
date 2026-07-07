@@ -85,6 +85,7 @@ export default function Movement() {
                             {m.isReceipt
                               ? <div className="text-[11px] text-slate-400">รับโดย {m.receivedBy || "-"}</div>
                               : <div className="text-[11px] text-slate-400">{m.toDepartment ? `→ ${m.toDepartment}` : ""}{m.toRequestor ? ` (${m.toRequestor})` : ""}</div>}
+                            {m.notes && <div className="mt-0.5 text-[11px] italic text-slate-400">📝 {m.notes}</div>}
                           </td>
                           <td className="px-5 py-2.5 text-center text-slate-600">{m.newStockQuantity != null ? fmtNumber(m.newStockQuantity) : "-"}</td>
                         </tr>
