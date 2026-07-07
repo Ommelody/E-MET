@@ -61,6 +61,14 @@ export default function App() {
 
   const go = (t: TabId) => { setTab(t); setMobileOpen(false); };
 
+  // เมนูล่างมือถือ: 4 เมนูหลักตามสิทธิ์ + ปุ่ม "เพิ่มเติม" เปิด drawer
+  const bottomPriority = ["announcements", "requisition", "history", "approvals", "inventory"];
+  const bottomMain = bottomPriority
+    .map((id) => visibleNav.find((n) => n.id === id))
+    .filter(Boolean)
+    .slice(0, 4) as typeof NAV;
+  const bottomNav = [...bottomMain, { id: "__more", label: "เพิ่มเติม", icon: Menu } as any];
+
   const SidebarInner = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 px-5 py-5">
@@ -133,12 +141,30 @@ export default function App() {
 
         {/* Main */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
-            <button onClick={() => setMobileOpen(true)} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border-none bg-slate-100 text-slate-600"><Menu className="h-5 w-5" /></button>
-            <span className="text-sm font-bold text-slate-700">THAMC e-Material</span>
+          <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 pb-3 backdrop-blur lg:hidden" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
+            <button onClick={() => setMobileOpen(true)} className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border-none bg-slate-100 text-slate-600"><Menu className="h-5 w-5" /></button>
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#5b4df6]"><Boxes className="h-4 w-4 text-white" /></div>
+              <span className="text-sm font-bold text-slate-700">THAMC e-Material</span>
+            </div>
           </header>
-          <main className="mx-auto w-full max-w-7xl flex-1 p-5 sm:p-8">{render()}</main>
+          <main className="mx-auto w-full max-w-7xl flex-1 p-5 pb-24 sm:p-8 lg:pb-8">{render()}</main>
         </div>
+
+        {/* Bottom nav (mobile) */}
+        <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          {bottomNav.map((n) => {
+            const Icon = n.icon;
+            const active = tab === n.id;
+            return (
+              <button key={n.id} onClick={() => n.id === "__more" ? setMobileOpen(true) : go(n.id as TabId)}
+                className={`flex flex-1 cursor-pointer flex-col items-center gap-0.5 border-none bg-transparent py-2 text-[10px] font-medium transition ${active ? "text-[#5b4df6]" : "text-slate-400"}`}>
+                <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.5 : 2} />
+                <span className="leading-tight">{n.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
     </ToastProvider>
   );
