@@ -24,7 +24,7 @@ async function fetchAll(table: string, select: string, applyFilters?: (q: any) =
 async function buildInvMap(itemIds: any[]) {
   const ids = [...new Set(itemIds.filter(Boolean))];
   if (!ids.length) return {} as Record<string, any>;
-  const rows = await fetchAll("inventory", "id,code,location,quantity,unit,unit_price", (q) => q.in("id", ids));
+  const rows = await fetchAll("inventory", "id,code,name,category,location,quantity,unit,unit_price", (q) => q.in("id", ids));
   const map: Record<string, any> = {};
   rows.forEach((r: any) => (map[r.id.toString()] = r));
   return map;
@@ -326,8 +326,8 @@ reportsRouter.get("/goodIssueSAP", async (req, res) => {
     const agg: Record<string, any> = {};
     logs.forEach((l: any) => {
       const inv = invMap[l.item_id?.toString()] || {};
-      const category = inv.category || "";
-      if (f.category && f.category !== "-- ทั้งหมด --" && category !== f.category) return;
+      const category = (inv.category || "").trim();
+      if (f.category && f.category !== "-- ทั้งหมด --" && category !== String(f.category).trim()) return;
 
       const deptRaw = (reqMap[l.reference_no] || "").trim();
       const deptCode = deptRaw.slice(0, 5);
