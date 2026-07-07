@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import {
   LayoutDashboard, Package, FilePlus2, ClipboardCheck, PackagePlus,
-  History as HistoryIcon, BarChart3, Shield, UserCog, LogOut, Boxes, Menu, X, Megaphone,
+  History as HistoryIcon, BarChart3, Shield, UserCog, LogOut, Boxes, Menu, X, Megaphone, ArrowLeftRight,
 } from "lucide-react";
 import Login from "./screens/Login";
 import Announcements from "./screens/Announcements";
+import Movement from "./screens/Movement";
 import Dashboard from "./screens/Dashboard";
 import Inventory from "./screens/Inventory";
 import Requisition from "./screens/Requisition";
@@ -19,7 +20,7 @@ import type { User } from "./types";
 
 const STORAGE_KEY = "thamc_user";
 
-type TabId = "announcements" | "dashboard" | "inventory" | "requisition" | "approvals" | "goods-receipt" | "history" | "reports" | "admin" | "profile";
+type TabId = "announcements" | "dashboard" | "inventory" | "movement" | "requisition" | "approvals" | "goods-receipt" | "history" | "reports" | "admin" | "profile";
 
 interface NavItem { id: TabId; label: string; icon: React.ComponentType<any>; roles?: string[]; }
 
@@ -31,6 +32,7 @@ const NAV: NavItem[] = [
   { id: "approvals", label: "อนุมัติใบเบิก", icon: ClipboardCheck, roles: ["Admin", "Manager", "Staff"] },
   { id: "inventory", label: "คลังพัสดุ", icon: Package },
   { id: "goods-receipt", label: "รับวัสดุเข้าคลัง", icon: PackagePlus, roles: ["Admin", "Manager", "Staff"] },
+  { id: "movement", label: "การเคลื่อนไหวพัสดุ", icon: ArrowLeftRight, roles: ["Admin", "Manager", "Staff"] },
   { id: "reports", label: "รายงาน", icon: BarChart3, roles: ["Admin", "Manager", "Staff"] },
   { id: "admin", label: "ผู้ดูแลระบบ", icon: Shield, roles: ["Admin"] },
 ];
@@ -104,6 +106,7 @@ export default function App() {
       case "history": return <History user={user} />;
       case "approvals": return <Approvals user={user} />;
       case "goods-receipt": return <GoodsReceipt user={user} />;
+      case "movement": return <Movement />;
       case "reports": return <Reports user={user} />;
       case "admin": return <Admin user={user} />;
       case "profile": return <Profile user={user} onUpdate={setAndStore} />;

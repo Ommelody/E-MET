@@ -238,3 +238,42 @@ reportsRouter.get("/inventoryStock", async (req, res) => {
     res.json(rows);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── รายงานด่วน (แสดงด้านบนหน้ารายงานทันที ไม่ต้องกรอง) ─────────
+reportsRouter.get("/quick", async (req, res) => {
+  try {
+    const days = parseInt((req.query.days as string) || "30");
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+
+    const recent = await fetchAll(
+      "transaction_logs",
+      "transaction_id,timestamp,type,reference_no,item_code,item_name,quantity_change,unit,received_by",
+      (q) => q.gte("timestamp", since).order("timestamp", { ascending: false })
+    );
+    const reqs = await fetchAll("requisitions", "id,requestor_department,created_at", (q) => q.gte("created_at", since));
+    const reqIds = reqs.map((r: any) => r.id);
+    const items = reqIds.length ? await fetchAll("requisition_items", "requisition_id,item_name,dispensed_quantity,unit,unit_price", (q) => q.in("requisition_id", reqIds)) : [];
+
+    const itemAgg: Record<string, any> = {};
+    items.forEach((it: any) => {
+      itemAgg[it.item_name] ||= { itemName: it.item_name, unit: it.unit, count: 0, totalDispensed: 0, value: 0 };
+      itemAgg[it.item_name].count += 1;
+      itemAgg[it.item_name].totalDispensed += it.dispensed_quantity || 0;
+      itemAgg[it.item_name].value += (it.dispensed_quantity || 0) * (it.unit_price || 0);
+    });
+    const depAgg: Record<string, number> = {};
+    reqs.forEach((r: any) => { const d = r.requestor_department || "ไม่ระบุ"; depAgg[d] = (depAgg[d] || 0) + 1; });
+
+    res.json({
+      days,
+      recentMovements: recent.slice(0, 12).map((l: any) => ({
+        timestamp: l.timestamp, type: l.type, isReceipt: l.type === "Goods Receipt",
+        itemCode: l.item_code, itemName: l.item_name, quantityChange: l.quantity_change,
+        unit: l.unit, referenceNo: l.reference_no, receivedBy: l.received_by,
+      })),
+      summary: { totalRequisitions: reqs.length, receiptCount: recent.filter((l: any) => l.type === "Goods Receipt").length, issueCount: recent.filter((l: any) => l.type === "Requisition Issue").length },
+      topItems: Object.values(itemAgg).sort((a: any, b: any) => b.count - a.count).slice(0, 8),
+      topDepartments: Object.entries(depAgg).map(([department, count]) => ({ department, count })).sort((a, b) => b.count - a.count).slice(0, 8),
+    });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});

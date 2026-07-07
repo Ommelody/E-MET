@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Play, FileSpreadsheet, FolderOpen, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, FileSpreadsheet, FolderOpen, Loader2, ChevronLeft, ChevronRight, ArrowLeftRight, TrendingUp, Building2, Zap } from "lucide-react";
 import * as XLSX from "xlsx";
 import { reportsApi } from "../lib/api";
 import { fmtBaht, fmtDate, fmtDateTime, todayISO } from "../lib/format";
@@ -70,6 +70,9 @@ export default function Reports({ user }: { user: User }) {
   const [ran, setRan] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 12;
+  const [quick, setQuick] = useState<any>(null);
+
+  useEffect(() => { reportsApi.quick(30).then(setQuick).catch(() => setQuick(null)); }, []);
 
   useEffect(() => {
     const first = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
@@ -108,7 +111,56 @@ export default function Reports({ user }: { user: User }) {
 
   return (
     <div>
-      <PageHeader title="รายงาน" subtitle="เลือกประเภทรายงานและตัวกรอง แล้วสร้างตารางสรุป" />
+      <PageHeader title="รายงาน" subtitle="รายงานด่วนด้านบน — หรือเลือกประเภทรายงานด้านล่างเพื่อกรองเอง" />
+
+      {/* ── รายงานด่วน ── */}
+      <div className="mb-6">
+        <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700"><Zap className="h-4 w-4 text-amber-500" />รายงานด่วน (30 วันล่าสุด)</div>
+        {!quick ? (
+          <Card className="p-6"><div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" />กำลังโหลด…</div></Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card className="p-5">
+              <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><ArrowLeftRight className="h-4 w-4 text-sky-500" />การเคลื่อนไหวล่าสุด</div>
+              <div className="flex flex-col divide-y divide-slate-50">
+                {quick.recentMovements.length === 0 ? <div className="py-4 text-center text-xs text-slate-400">ไม่มีข้อมูล</div> : quick.recentMovements.slice(0, 6).map((m: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-medium text-slate-700">{m.itemName}</div>
+                      <div className="text-[10px] text-slate-400">{fmtDateTime(m.timestamp)}</div>
+                    </div>
+                    <span className={`ml-2 shrink-0 text-xs font-bold ${m.isReceipt ? "text-emerald-600" : "text-rose-600"}`}>{m.quantityChange > 0 ? "+" : ""}{m.quantityChange} {m.unit}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card className="p-5">
+              <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><TrendingUp className="h-4 w-4 text-indigo-500" />วัสดุเบิกบ่อย</div>
+              <div className="flex flex-col divide-y divide-slate-50">
+                {quick.topItems.length === 0 ? <div className="py-4 text-center text-xs text-slate-400">ไม่มีข้อมูล</div> : quick.topItems.slice(0, 6).map((it: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <div className="flex min-w-0 items-center gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">{i + 1}</span><span className="truncate text-xs font-medium text-slate-700">{it.itemName}</span></div>
+                    <span className="ml-2 shrink-0 text-xs font-semibold text-slate-500">{it.count} ครั้ง</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card className="p-5">
+              <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><Building2 className="h-4 w-4 text-emerald-500" />หน่วยงานเบิกบ่อย</div>
+              <div className="flex flex-col divide-y divide-slate-50">
+                {quick.topDepartments.length === 0 ? <div className="py-4 text-center text-xs text-slate-400">ไม่มีข้อมูล</div> : quick.topDepartments.slice(0, 6).map((d: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <div className="flex min-w-0 items-center gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-600">{i + 1}</span><span className="truncate text-xs font-medium text-slate-700">{d.department}</span></div>
+                    <span className="ml-2 shrink-0 text-xs font-semibold text-slate-500">{d.count} ใบ</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700"><FileSpreadsheet className="h-4 w-4 text-slate-500" />รายงานแบบละเอียด (เลือกประเภทและกรอง)</div>
 
       <Card className="mb-4 p-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -183,6 +183,17 @@ async function approveRequisition(
     for (const ci of clientDispensedItemsData) {
       const sheetItem = (allItems ?? []).find((x: any) => x.item_id.toString() === ci.itemId.toString());
       if (!sheetItem) continue;
+
+      // ── ขั้น Manager: ปรับ "ยอดอนุมัติ" (quantity) ได้ ไม่แตะ dispensed ──
+      if (isManagerStep) {
+        const approvedQty = parseInt(ci.approvedQuantity ?? ci.dispensedQuantity ?? sheetItem.quantity) || 0;
+        await db.from("requisition_items").update({
+          quantity: approvedQty,
+          notes_for_item: ci.itemNote || sheetItem.notes_for_item || "",
+        }).eq("id", sheetItem.id);
+        continue;
+      }
+
       const qtyThis = parseInt(ci.dispensedQuantity) || 0;
       const newCumulative = isFulfillBackorder ? (sheetItem.dispensed_quantity || 0) + qtyThis : qtyThis;
       const requestedQty = sheetItem.quantity || 0;

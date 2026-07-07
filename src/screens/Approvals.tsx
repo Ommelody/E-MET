@@ -48,7 +48,7 @@ export default function Approvals({ user }: { user: User }) {
       const nd: Record<string, number> = {}, nb: Record<string, boolean> = {}, nn: Record<string, string> = {};
       its.forEach((it: any) => {
         const reqQty = it.quantity || 0, stock = it.currentInventoryQuantity ?? 0, already = it.dispensedQuantity || 0;
-        if (level === "manager") nd[it.itemId] = Math.min(reqQty, stock);
+        if (level === "manager") nd[it.itemId] = reqQty; // อนุมัติเต็มตามที่ขอเป็นค่าตั้งต้น (ปรับลดได้)
         else if (level === "stock") nd[it.itemId] = Math.min(reqQty, stock);
         else if (level === "fulfill_backorder") nd[it.itemId] = it.isBackordered ? Math.min(reqQty - already, stock) : 0;
         nb[it.itemId] = it.isBackordered; nn[it.itemId] = it.notesForItem || "";
@@ -73,7 +73,8 @@ export default function Approvals({ user }: { user: User }) {
     try {
       const dispensedItems = items.map((it: any) => ({
         itemId: it.itemId, itemName: it.itemName, unit: it.unit,
-        dispensedQuantity: disp[it.itemId] || 0, isBackordered: bo[it.itemId] || false, itemNote: (notes[it.itemId] || "").trim(),
+        dispensedQuantity: disp[it.itemId] || 0, approvedQuantity: disp[it.itemId] || 0,
+        isBackordered: bo[it.itemId] || false, itemNote: (notes[it.itemId] || "").trim(),
       }));
       const res = await requisitionApi.approve(active.id, { approverUsername: user.username, approvalLevel: level, approvalDecision: decision, notes: approvalNote, dispensedItems });
       if (res.success) { toast.push({ type: "success", msg: `อัปเดตสถานะเป็น: ${statusLabel(res.newStatus)}` }); setActive(null); load(); }
@@ -116,7 +117,9 @@ export default function Approvals({ user }: { user: User }) {
   };
 
   const level = active ? levelOf(active.status) : "";
-  const editable = level === "stock" || level === "fulfill_backorder";
+  const isManager = level === "manager";
+  const isDispense = level === "stock" || level === "fulfill_backorder";
+  const editable = isManager || isDispense;
 
   return (
     <div>
@@ -188,8 +191,9 @@ export default function Approvals({ user }: { user: User }) {
               <table className="w-full text-xs">
                 <thead><tr className="bg-slate-50/70 text-left font-semibold text-slate-500">
                   <th className="px-3 py-2.5">วัสดุ</th><th className="px-3 py-2.5 text-center">ขอเบิก</th><th className="px-3 py-2.5 text-center">คงเหลือ</th>
-                  {editable && <th className="px-3 py-2.5 text-center">จ่ายครั้งนี้</th>}
-                  {editable && <th className="px-3 py-2.5 text-center">ค้างจ่าย / หมายเหตุ</th>}
+                  {editable && <th className="px-3 py-2.5 text-center">{isManager ? "อนุมัติจำนวน" : "จ่ายครั้งนี้"}</th>}
+                  {isDispense && <th className="px-3 py-2.5 text-center">ค้างจ่าย / หมายเหตุ</th>}
+                  {isManager && <th className="px-3 py-2.5 text-center">หมายเหตุ</th>}
                   <th className="px-3 py-2.5 text-right">มูลค่า</th>
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
@@ -203,16 +207,22 @@ export default function Approvals({ user }: { user: User }) {
                         {editable && (
                           <td className="px-3 py-2.5 text-center">
                             <input type="number" min={0} disabled={bo[it.itemId]} className={inputClass + " mx-auto w-20 text-center disabled:opacity-40"} value={disp[it.itemId] ?? 0}
-                              onChange={(e) => setDisp({ ...disp, [it.itemId]: Math.max(0, Math.min(parseInt(e.target.value) || 0, stock)) })} />
+                              onChange={(e) => { const raw = Math.max(0, parseInt(e.target.value) || 0); setDisp({ ...disp, [it.itemId]: isManager ? raw : Math.min(raw, stock) }); }} />
+                            {isManager && (disp[it.itemId] ?? 0) > it.quantity && <div className="mt-0.5 text-[10px] text-amber-500">มากกว่ายอดขอ</div>}
                           </td>
                         )}
-                        {editable && (
+                        {isDispense && (
                           <td className="px-3 py-2.5">
                             <label className="flex items-center justify-center gap-1 text-[11px] font-semibold text-rose-600">
                               <input type="checkbox" checked={bo[it.itemId] || false} onChange={(e) => { const c = e.target.checked; setBo({ ...bo, [it.itemId]: c }); setDisp({ ...disp, [it.itemId]: c ? 0 : Math.min(it.quantity, stock) }); }} />
                               ค้างจ่าย
                             </label>
                             <input placeholder="หมายเหตุ…" className="mt-1 w-full rounded border border-slate-200 bg-slate-50 px-1.5 py-1 text-[11px]" value={notes[it.itemId] || ""} onChange={(e) => setNotes({ ...notes, [it.itemId]: e.target.value })} />
+                          </td>
+                        )}
+                        {isManager && (
+                          <td className="px-3 py-2.5">
+                            <input placeholder="หมายเหตุ…" className="w-full rounded border border-slate-200 bg-slate-50 px-1.5 py-1 text-[11px]" value={notes[it.itemId] || ""} onChange={(e) => setNotes({ ...notes, [it.itemId]: e.target.value })} />
                           </td>
                         )}
                         <td className="px-3 py-2.5 text-right font-medium text-slate-700">{fmtBaht((disp[it.itemId] ?? 0) * (it.UnitPrice || 0))}</td>

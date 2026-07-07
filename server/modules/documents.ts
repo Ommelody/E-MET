@@ -14,9 +14,14 @@ documentsRouter.get("/view", async (req, res) => {
   const path = req.query.path as string;
   if (!path) return res.status(400).send("missing path");
   try {
-    const url = await getSignedUrl(bucket, path, 3600);
-    if (!url) return res.status(404).send("ไม่พบเอกสาร");
-    res.redirect(url);
+    // ดาวน์โหลดเนื้อหาจริงแล้วเสิร์ฟด้วย content-type ที่ถูกต้อง (กันเบราว์เซอร์แสดงเป็นข้อความ)
+    const { data, error } = await db.storage.from(bucket).download(path);
+    if (error || !data) return res.status(404).send("ไม่พบเอกสาร");
+    const buf = Buffer.from(await data.arrayBuffer());
+    const isHtml = path.toLowerCase().endsWith(".html") || path.toLowerCase().endsWith(".htm");
+    res.setHeader("Content-Type", isHtml ? "text/html; charset=utf-8" : (data.type || "application/octet-stream"));
+    res.setHeader("Content-Disposition", "inline");
+    res.send(buf);
   } catch (e: any) {
     res.status(500).send("ไม่สามารถเปิดเอกสารได้: " + e.message);
   }

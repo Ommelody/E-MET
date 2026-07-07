@@ -72,6 +72,11 @@ export const dashboardApi = {
 
 export const reportsApi = {
   run: (type: string, filters: any) => request<any[]>(`/reports/${type}${qs(filters)}`),
+  quick: (days = 30) => request<any>(`/reports/quick${qs({ days })}`),
+};
+
+export const movementApi = {
+  search: (query: string) => request<any>(`/movement${qs({ query })}`),
 };
 
 export const announcementsApi = {
