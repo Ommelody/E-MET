@@ -281,3 +281,87 @@ reportsRouter.get("/quick", async (req, res) => {
     });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
+
+// ── หมวดวัสดุทั้งหมด (สำหรับ dropdown Good Issue SAP) ───────────
+reportsRouter.get("/categories", async (_req, res) => {
+  try {
+    const inv = await fetchAll("inventory", "category");
+    const cats = [...new Set(inv.map((i: any) => (i.category || "").trim()).filter(Boolean))].sort();
+    res.json(cats);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Good Issue SAP — สรุปเฉพาะไอเท็มที่จ่ายออก ตามหมวดวัสดุ ─────
+// คืน rows ตามโครงสร้างเทมเพลต SAP (A–N)
+reportsRouter.get("/goodIssueSAP", async (req, res) => {
+  try {
+    const f = req.query as any;
+    const WHSE = "17OSS";
+
+    // 1) transaction logs ประเภทจ่ายออก (Requisition Issue) ในช่วงเวลา
+    const logs = await fetchAll(
+      "transaction_logs",
+      "timestamp,type,reference_no,item_id,item_code,item_name,quantity_change,unit,unit_price",
+      (q) => {
+        let x = q.eq("type", "Requisition Issue");
+        if (f.startDate) x = x.gte("timestamp", new Date(f.startDate).toISOString());
+        if (f.endDate) { const e = new Date(f.endDate); e.setHours(23, 59, 59, 999); x = x.lte("timestamp", e.toISOString()); }
+        return x;
+      }
+    );
+    if (logs.length === 0) return res.json({ rows: [] });
+
+    // 2) inventory (code/name/category/unit/price/location)
+    const invMap = await buildInvMap(logs.map((l: any) => l.item_id));
+
+    // 3) requisition -> department code
+    const reqIds = [...new Set(logs.map((l: any) => l.reference_no).filter(Boolean))];
+    const reqMap: Record<string, any> = {};
+    if (reqIds.length) {
+      const reqs = await fetchAll("requisitions", "id,requestor_department", (q) => q.in("id", reqIds));
+      reqs.forEach((r: any) => (reqMap[r.id] = r.requestor_department || ""));
+    }
+
+    // 4) aggregate by item + department code
+    const agg: Record<string, any> = {};
+    logs.forEach((l: any) => {
+      const inv = invMap[l.item_id?.toString()] || {};
+      const category = inv.category || "";
+      if (f.category && f.category !== "-- ทั้งหมด --" && category !== f.category) return;
+
+      const deptRaw = (reqMap[l.reference_no] || "").trim();
+      const deptCode = deptRaw.slice(0, 5);
+      const bizType = deptRaw.slice(0, 2);
+      const qty = Math.abs(l.quantity_change || 0);
+      const price = inv.unit_price ?? l.unit_price ?? 0;
+      const key = `${l.item_id}|${deptCode}`;
+      if (!agg[key]) {
+        agg[key] = {
+          "Item No.": inv.code || l.item_code || "",
+          "Item Description": inv.name || l.item_name || "",
+          "Bar Code": "",
+          "Vendor Catalog No.": "",
+          "Quantity": 0,
+          "UoM Code": inv.unit || l.unit || "",
+          "UoM Name": inv.unit || l.unit || "",
+          "Info Price": price,
+          "Total": 0,
+          "Whse": WHSE,
+          "Inventory Offset - Decrease Account": "",
+          "Project": "",
+          "Business Type": bizType,
+          "Department": deptCode,
+          _location: inv.location || "",
+          _category: category,
+        };
+      }
+      agg[key]["Quantity"] += qty;
+      agg[key]["Total"] = agg[key]["Quantity"] * price;
+    });
+
+    const rows = Object.values(agg).sort((a: any, b: any) =>
+      a["Department"].localeCompare(b["Department"]) || String(a["Item No."]).localeCompare(String(b["Item No."]))
+    );
+    res.json({ rows });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
