@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, FileText, FileDown, Eye, ClipboardList } from "lucide-react";
+import { Search, FileText, FileDown, Eye, ClipboardList, Printer } from "lucide-react";
 import { requisitionApi } from "../lib/api";
 import { fmtBaht, fmtNumber, fmtDate, fmtDateTime, statusLabel, STATUS_STYLES, STATUS_LABELS } from "../lib/format";
 import { Button, Card, inputClass, Modal, Spinner, EmptyState, PageHeader, Badge, useToast } from "../ui";
@@ -74,8 +74,13 @@ export default function History({ user }: { user: User }) {
                       <td className="px-4 py-3"><Badge bg={s.bg} color={s.color}>{statusLabel(r.status)}</Badge></td>
                       <td className="px-4 py-3">
                         <div className="flex justify-center gap-1">
-                          {r.RequisitionPDFLink && <a href={r.RequisitionPDFLink} target="_blank" rel="noreferrer" title="ใบเบิก" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"><FileText className="h-4 w-4" /></a>}
-                          {r.GoodsIssuePDFLinks?.map((g: any, i: number) => <a key={i} href={g.url} target="_blank" rel="noreferrer" title={`ใบจ่าย ${g.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"><FileDown className="h-4 w-4" /></a>)}
+                          {r.RequisitionPDFLink && <a href={r.RequisitionPDFLink} target="_blank" rel="noreferrer" title="เอกสารใบเบิก" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"><FileText className="h-4 w-4" /></a>}
+                          {r.GoodsIssuePDFLinks?.map((g: any, i: number) => (
+                            <span key={i} className="inline-flex">
+                              <a href={g.url} target="_blank" rel="noreferrer" title={`เอกสารใบจ่าย ${g.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"><FileDown className="h-4 w-4" /></a>
+                              <button onClick={() => window.open(g.url, "_blank")} title={`พิมพ์ใบจ่าย ${g.id}`} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-slate-400 hover:bg-sky-50 hover:text-sky-600"><Printer className="h-4 w-4" /></button>
+                            </span>
+                          ))}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right"><Button size="sm" variant="outline" onClick={() => openDetail(r.id)}><Eye className="h-4 w-4" />ดู</Button></td>

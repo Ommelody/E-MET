@@ -11,7 +11,7 @@ inventoryRouter.get("/", async (_req, res) => {
   const { data, error } = await db
     .from("inventory")
     .select(
-      "id,code,name,category,unit,quantity,min_quantity,unit_price,location,created_at,updated_at,catalog(image_path)"
+      "id,code,name,category,unit,quantity,min_quantity,max_issue_quantity,unit_price,location,created_at,updated_at,catalog(image_path)"
     )
     .order("name", { ascending: true });
   if (error) return res.status(500).json({ error: error.message });
@@ -24,6 +24,7 @@ inventoryRouter.get("/", async (_req, res) => {
     unit: it.unit || "",
     quantity: it.quantity,
     minQuantity: it.min_quantity,
+    maxIssueQuantity: it.max_issue_quantity,
     unitPrice: it.unit_price,
     location: it.location || "",
     createdAt: it.created_at,
@@ -48,6 +49,7 @@ inventoryRouter.post("/", async (req, res) => {
       unit: b.unit,
       quantity: parseInt(b.quantity) || 0,
       min_quantity: parseInt(b.minQuantity) || 0,
+      max_issue_quantity: b.maxIssueQuantity === "" || b.maxIssueQuantity == null ? null : parseInt(b.maxIssueQuantity),
       unit_price: parseFloat(b.unitPrice) || 0,
       location: b.location || "",
     })
@@ -69,6 +71,7 @@ inventoryRouter.put("/:id", async (req, res) => {
       unit: b.unit,
       quantity: parseInt(b.quantity) || 0,
       min_quantity: parseInt(b.minQuantity) || 0,
+      max_issue_quantity: b.maxIssueQuantity === "" || b.maxIssueQuantity == null ? null : parseInt(b.maxIssueQuantity),
       unit_price: parseFloat(b.unitPrice) || 0,
       location: b.location || "",
       updated_at: new Date().toISOString(),

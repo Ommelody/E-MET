@@ -261,8 +261,12 @@ reportsRouter.get("/quick", async (req, res) => {
       itemAgg[it.item_name].totalDispensed += it.dispensed_quantity || 0;
       itemAgg[it.item_name].value += (it.dispensed_quantity || 0) * (it.unit_price || 0);
     });
-    const depAgg: Record<string, number> = {};
-    reqs.forEach((r: any) => { const d = r.requestor_department || "ไม่ระบุ"; depAgg[d] = (depAgg[d] || 0) + 1; });
+    const depAgg: Record<string, any> = {};
+    const valueByReq: Record<string, number> = {};
+    items.forEach((it: any) => { valueByReq[it.requisition_id] = (valueByReq[it.requisition_id] || 0) + (it.dispensed_quantity || 0) * (it.unit_price || 0); });
+    reqs.forEach((r: any) => { const d = r.requestor_department || "ไม่ระบุ"; depAgg[d] ||= { count: 0, value: 0 }; depAgg[d].count += 1; depAgg[d].value += valueByReq[r.id] || 0; });
+
+    const totalValue = items.reduce((s: number, it: any) => s + (it.dispensed_quantity || 0) * (it.unit_price || 0), 0);
 
     res.json({
       days,
@@ -271,9 +275,9 @@ reportsRouter.get("/quick", async (req, res) => {
         itemCode: l.item_code, itemName: l.item_name, quantityChange: l.quantity_change,
         unit: l.unit, referenceNo: l.reference_no, receivedBy: l.received_by,
       })),
-      summary: { totalRequisitions: reqs.length, receiptCount: recent.filter((l: any) => l.type === "Goods Receipt").length, issueCount: recent.filter((l: any) => l.type === "Requisition Issue").length },
+      summary: { totalRequisitions: reqs.length, totalValue, receiptCount: recent.filter((l: any) => l.type === "Goods Receipt").length, issueCount: recent.filter((l: any) => l.type === "Requisition Issue").length },
       topItems: Object.values(itemAgg).sort((a: any, b: any) => b.count - a.count).slice(0, 8),
-      topDepartments: Object.entries(depAgg).map(([department, count]) => ({ department, count })).sort((a, b) => b.count - a.count).slice(0, 8),
+      topDepartments: Object.entries(depAgg).map(([department, v]: any) => ({ department, count: v.count, value: v.value })).sort((a, b) => b.count - a.count).slice(0, 8),
     });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });

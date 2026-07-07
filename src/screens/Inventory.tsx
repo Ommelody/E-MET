@@ -5,7 +5,7 @@ import { fmtBaht, fmtNumber } from "../lib/format";
 import { Button, Card, Field, inputClass, Modal, Spinner, EmptyState, PageHeader, useToast } from "../ui";
 import type { User } from "../types";
 
-const empty = { code: "", name: "", category: "", unit: "", quantity: "0", minQuantity: "0", unitPrice: "0", location: "" };
+const empty = { code: "", name: "", category: "", unit: "", quantity: "0", minQuantity: "0", maxIssueQuantity: "", unitPrice: "0", location: "" };
 
 export default function Inventory({ user }: { user: User }) {
   const toast = useToast();
@@ -41,7 +41,7 @@ export default function Inventory({ user }: { user: User }) {
   const openEdit = (it: any) => {
     setEditing(it);
     setForm({ code: it.code, name: it.name, category: it.category || "", unit: it.unit || "",
-      quantity: String(it.quantity), minQuantity: String(it.minQuantity), unitPrice: String(it.unitPrice), location: it.location || "" });
+      quantity: String(it.quantity), minQuantity: String(it.minQuantity), maxIssueQuantity: it.maxIssueQuantity == null ? "" : String(it.maxIssueQuantity), unitPrice: String(it.unitPrice), location: it.location || "" });
     setImageFile(null);
     setModalOpen(true);
   };
@@ -166,6 +166,7 @@ export default function Inventory({ user }: { user: User }) {
           <Field label="หน่วยนับ"><input className={inputClass} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} /></Field>
           <Field label="จำนวนคงเหลือ"><input type="number" className={inputClass} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} /></Field>
           <Field label="จุดสั่งซื้อขั้นต่ำ"><input type="number" className={inputClass} value={form.minQuantity} onChange={(e) => setForm({ ...form, minQuantity: e.target.value })} /></Field>
+          <Field label="จำนวนเบิกสูงสุด/ครั้ง (เว้นว่าง=ไม่จำกัด)"><input type="number" min={0} className={inputClass} value={form.maxIssueQuantity} onChange={(e) => setForm({ ...form, maxIssueQuantity: e.target.value })} placeholder="ไม่จำกัด" /></Field>
           <Field label="ราคาต่อหน่วย"><input type="number" step="0.01" className={inputClass} value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: e.target.value })} /></Field>
           <Field label="ที่ตั้ง"><input className={inputClass} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
           <div className="sm:col-span-2">

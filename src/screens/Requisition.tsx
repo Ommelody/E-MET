@@ -5,7 +5,7 @@ import { fmtBaht, fmtNumber, todayISO } from "../lib/format";
 import { Button, Card, Field, inputClass, Modal, EmptyState, PageHeader, useToast } from "../ui";
 import type { User } from "../types";
 
-interface Line { itemId: string; itemName: string; unit: string; quantity: number; unitPrice: number; available: number; }
+interface Line { itemId: string; itemName: string; unit: string; quantity: number; unitPrice: number; available: number; maxIssue: number | null; }
 
 export default function Requisition({ user, onDone }: { user: User; onDone: () => void }) {
   const toast = useToast();
@@ -28,11 +28,11 @@ export default function Requisition({ user, onDone }: { user: User; onDone: () =
   }, [items, lines, search]);
 
   const addLine = (it: any) => {
-    setLines((cur) => [...cur, { itemId: it.id, itemName: it.name, unit: it.unit, quantity: 1, unitPrice: it.unitPrice, available: it.quantity }]);
+    setLines((cur) => [...cur, { itemId: it.id, itemName: it.name, unit: it.unit, quantity: 1, unitPrice: it.unitPrice, available: it.quantity, maxIssue: it.maxIssueQuantity ?? null }]);
     setPickerOpen(false);
     setSearch("");
   };
-  const setQty = (id: string, q: number) => setLines((cur) => cur.map((l) => (l.itemId === id ? { ...l, quantity: Math.max(1, q) } : l)));
+  const setQty = (id: string, q: number) => setLines((cur) => cur.map((l) => (l.itemId === id ? { ...l, quantity: Math.max(1, l.maxIssue ? Math.min(q, l.maxIssue) : q) } : l)));
   const removeLine = (id: string) => setLines((cur) => cur.filter((l) => l.itemId !== id));
 
   const total = lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
@@ -95,7 +95,8 @@ export default function Requisition({ user, onDone }: { user: User; onDone: () =
                         <td className="px-4 py-3 text-center text-slate-500">{fmtNumber(l.available)} {l.unit}</td>
                         <td className="px-4 py-3 text-center">
                           <input type="number" min={1} className={inputClass + " mx-auto w-20 text-center"} value={l.quantity} onChange={(e) => setQty(l.itemId, parseInt(e.target.value) || 1)} />
-                          {l.quantity > l.available && <div className="mt-0.5 text-[10px] text-amber-500">เกินคงเหลือ (จะค้างจ่าย)</div>}
+                          {l.quantity > l.available && <div className="mt-0.5 text-[10px] text-amber-500">เกินคงเหลือ</div>}
+                          {l.maxIssue != null && <div className="mt-0.5 text-[10px] text-slate-400">เบิกได้สูงสุด {l.maxIssue}</div>}
                         </td>
                         <td className="px-4 py-3 text-right font-medium text-slate-700">{fmtBaht(l.quantity * l.unitPrice)}</td>
                         <td className="px-4 py-3 text-right"><button onClick={() => removeLine(l.itemId)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-slate-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button></td>

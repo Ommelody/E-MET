@@ -196,8 +196,8 @@ async function approveRequisition(
 
       const qtyThis = parseInt(ci.dispensedQuantity) || 0;
       const newCumulative = isFulfillBackorder ? (sheetItem.dispensed_quantity || 0) + qtyThis : qtyThis;
-      const requestedQty = sheetItem.quantity || 0;
-      const stillBO = ci.isBackordered || newCumulative < requestedQty;
+      // จ่ายน้อยกว่าเบิกได้ — ค้างจ่ายเฉพาะเมื่อติ๊กช่อง "ค้างจ่าย" เท่านั้น
+      const stillBO = !!ci.isBackordered;
 
       await db.from("requisition_items").update({
         dispensed_quantity: newCumulative, is_backordered: stillBO,

@@ -106,6 +106,14 @@ export default function Reports({ user }: { user: User }) {
     toast.push({ type: "success", msg: "ส่งออก Excel สำเร็จ" });
   };
 
+  const exportQuick = (rowsData: any[], name: string) => {
+    if (!rowsData || rowsData.length === 0) return toast.push({ type: "error", msg: "ไม่มีข้อมูล" });
+    const ws = XLSX.utils.json_to_sheet(rowsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, name);
+    XLSX.writeFile(wb, `THAMC_${name}_${todayISO()}.xlsx`);
+  };
+
   const totalPages = Math.ceil(rows.length / pageSize);
   const paged = rows.slice((page - 1) * pageSize, page * pageSize);
 
@@ -115,13 +123,25 @@ export default function Reports({ user }: { user: User }) {
 
       {/* ── รายงานด่วน ── */}
       <div className="mb-6">
-        <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-700"><Zap className="h-4 w-4 text-amber-500" />รายงานด่วน (30 วันล่าสุด)</div>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-700"><Zap className="h-4 w-4 text-amber-500" />รายงานด่วน (30 วันล่าสุด)</div>
+          {quick && (
+            <div className="flex items-center gap-4 text-xs">
+              <span className="text-slate-500">ใบเบิก <b className="text-slate-700">{fmtNumber(quick.summary.totalRequisitions)}</b></span>
+              <span className="text-slate-500">มูลค่าจ่ายจริง <b className="text-emerald-600">{fmtBaht(quick.summary.totalValue)}</b></span>
+              <span className="text-slate-500">รับเข้า <b className="text-sky-600">{fmtNumber(quick.summary.receiptCount)}</b> / จ่ายออก <b className="text-rose-600">{fmtNumber(quick.summary.issueCount)}</b></span>
+            </div>
+          )}
+        </div>
         {!quick ? (
           <Card className="p-6"><div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" />กำลังโหลด…</div></Card>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card className="p-5">
-              <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><ArrowLeftRight className="h-4 w-4 text-sky-500" />การเคลื่อนไหวล่าสุด</div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><ArrowLeftRight className="h-4 w-4 text-sky-500" />การเคลื่อนไหวล่าสุด</div>
+                <button onClick={() => exportQuick(quick.recentMovements, "Movements")} className="cursor-pointer text-[11px] font-semibold text-emerald-600 hover:underline">Excel</button>
+              </div>
               <div className="flex flex-col divide-y divide-slate-50">
                 {quick.recentMovements.length === 0 ? <div className="py-4 text-center text-xs text-slate-400">ไม่มีข้อมูล</div> : quick.recentMovements.slice(0, 6).map((m: any, i: number) => (
                   <div key={i} className="flex items-center justify-between py-2">
@@ -135,23 +155,29 @@ export default function Reports({ user }: { user: User }) {
               </div>
             </Card>
             <Card className="p-5">
-              <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><TrendingUp className="h-4 w-4 text-indigo-500" />วัสดุเบิกบ่อย</div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><TrendingUp className="h-4 w-4 text-indigo-500" />วัสดุเบิกบ่อย</div>
+                <button onClick={() => exportQuick(quick.topItems, "TopItems")} className="cursor-pointer text-[11px] font-semibold text-emerald-600 hover:underline">Excel</button>
+              </div>
               <div className="flex flex-col divide-y divide-slate-50">
                 {quick.topItems.length === 0 ? <div className="py-4 text-center text-xs text-slate-400">ไม่มีข้อมูล</div> : quick.topItems.slice(0, 6).map((it: any, i: number) => (
                   <div key={i} className="flex items-center justify-between py-2">
                     <div className="flex min-w-0 items-center gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">{i + 1}</span><span className="truncate text-xs font-medium text-slate-700">{it.itemName}</span></div>
-                    <span className="ml-2 shrink-0 text-xs font-semibold text-slate-500">{it.count} ครั้ง</span>
+                    <span className="ml-2 shrink-0 text-xs font-semibold text-slate-500">{it.count} ครั้ง · {fmtNumber(it.totalDispensed)} {it.unit}</span>
                   </div>
                 ))}
               </div>
             </Card>
             <Card className="p-5">
-              <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><Building2 className="h-4 w-4 text-emerald-500" />หน่วยงานเบิกบ่อย</div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><Building2 className="h-4 w-4 text-emerald-500" />หน่วยงานเบิกบ่อย</div>
+                <button onClick={() => exportQuick(quick.topDepartments, "TopDepartments")} className="cursor-pointer text-[11px] font-semibold text-emerald-600 hover:underline">Excel</button>
+              </div>
               <div className="flex flex-col divide-y divide-slate-50">
                 {quick.topDepartments.length === 0 ? <div className="py-4 text-center text-xs text-slate-400">ไม่มีข้อมูล</div> : quick.topDepartments.slice(0, 6).map((d: any, i: number) => (
                   <div key={i} className="flex items-center justify-between py-2">
                     <div className="flex min-w-0 items-center gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-600">{i + 1}</span><span className="truncate text-xs font-medium text-slate-700">{d.department}</span></div>
-                    <span className="ml-2 shrink-0 text-xs font-semibold text-slate-500">{d.count} ใบ</span>
+                    <span className="ml-2 shrink-0 text-xs font-semibold text-slate-500">{d.count} ใบ · {fmtBaht(d.value)}</span>
                   </div>
                 ))}
               </div>
