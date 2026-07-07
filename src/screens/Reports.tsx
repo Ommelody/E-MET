@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Play, FileSpreadsheet, FolderOpen, Loader2, ChevronLeft, ChevronRight, ArrowLeftRight, TrendingUp, Building2, Zap } from "lucide-react";
 import * as XLSX from "xlsx";
 import { reportsApi } from "../lib/api";
-import { fmtBaht, fmtDate, fmtDateTime, todayISO } from "../lib/format";
+import { fmtBaht, fmtDate, fmtDateTime, fmtNumber, todayISO } from "../lib/format";
 import { Card, Button, inputClass, PageHeader, useToast } from "../ui";
 import type { User } from "../types";
 
