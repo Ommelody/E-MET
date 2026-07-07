@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Search, Send, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Search, Send, ShoppingCart, ImageOff, CheckCircle2 } from "lucide-react";
 import { inventoryApi, requisitionApi } from "../lib/api";
 import { fmtBaht, fmtNumber, todayISO } from "../lib/format";
 import { Button, Card, Field, inputClass, Modal, EmptyState, PageHeader, useToast } from "../ui";
@@ -16,6 +16,8 @@ export default function Requisition({ user, onDone }: { user: User; onDone: () =
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [successId, setSuccessId] = useState<string | null>(null);
 
   useEffect(() => { inventoryApi.list().then(setItems).catch((e) => toast.push({ type: "error", msg: e.message })); }, []);
 
@@ -40,13 +42,12 @@ export default function Requisition({ user, onDone }: { user: User; onDone: () =
     if (lines.length === 0) return toast.push({ type: "error", msg: "กรุณาเพิ่มรายการวัสดุอย่างน้อย 1 รายการ" });
     setSubmitting(true);
     try {
-      await requisitionApi.create(
+      const res = await requisitionApi.create(
         { date, purpose, requestedBy: user.username, requestorName: user.name, requestorDepartment: user.department },
         lines.map((l) => ({ itemId: l.itemId, itemName: l.itemName, quantity: l.quantity, unit: l.unit }))
       );
-      toast.push({ type: "success", msg: "ส่งใบเบิกเรียบร้อย รอการอนุมัติ" });
       setLines([]); setPurpose("");
-      onDone();
+      setSuccessId(res.requisitionId || "-");
     } catch (e: any) {
       toast.push({ type: "error", msg: e.message });
     } finally { setSubmitting(false); }
@@ -129,7 +130,14 @@ export default function Requisition({ user, onDone }: { user: User; onDone: () =
             <div className="flex flex-col divide-y divide-slate-50">
               {available.slice(0, 50).map((it) => (
                 <button key={it.id} onClick={() => addLine(it)} className="flex cursor-pointer items-center justify-between border-none bg-transparent px-2 py-3 text-left hover:bg-slate-50">
-                  <div><div className="text-sm font-medium text-slate-700">{it.name}</div><div className="font-mono text-[11px] text-slate-400">{it.code} · {it.location || "ไม่ระบุที่ตั้ง"}</div></div>
+                  <div className="flex items-center gap-3">
+                    {it.imageUrl ? (
+                      <img src={it.imageUrl} alt="" onClick={(e) => { e.stopPropagation(); setLightbox(it.imageUrl); }} className="h-11 w-11 shrink-0 cursor-zoom-in rounded-lg border border-slate-200 object-cover transition hover:scale-105" />
+                    ) : (
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-300"><ImageOff className="h-4 w-4" /></div>
+                    )}
+                    <div><div className="text-sm font-medium text-slate-700">{it.name}</div><div className="font-mono text-[11px] text-slate-400">{it.code} · {it.location || "ไม่ระบุที่ตั้ง"}</div></div>
+                  </div>
                   <div className="text-right"><div className="text-xs text-slate-500">คงเหลือ {fmtNumber(it.quantity)} {it.unit}</div><div className="text-[11px] text-slate-400">{fmtBaht(it.unitPrice)}/{it.unit}</div></div>
                 </button>
               ))}
@@ -137,6 +145,29 @@ export default function Requisition({ user, onDone }: { user: User; onDone: () =
           )}
         </div>
       </Modal>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+          <button onClick={() => setLightbox(null)} className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40">✕</button>
+          <img src={lightbox} alt="" className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl" />
+        </div>
+      )}
+
+      {successId && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-7 text-center shadow-2xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><CheckCircle2 className="h-9 w-9" /></div>
+            <h3 className="mt-4 text-lg font-bold text-slate-800">ส่งคำขอสำเร็จ!</h3>
+            <p className="mt-1 text-sm text-slate-500">ระบบสร้างใบเบิกเลขที่</p>
+            <div className="my-3 rounded-xl bg-indigo-50 py-3 font-mono text-xl font-bold text-[#5b4df6]">{successId}</div>
+            <p className="text-xs text-slate-400">ใบเบิกเข้าสู่ขั้นตอนอนุมัติโดยหัวหน้างานก่อน</p>
+            <div className="mt-5 flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setSuccessId(null)}>สร้างใบใหม่</Button>
+              <Button className="flex-1" onClick={() => { setSuccessId(null); onDone(); }}>ดูประวัติ</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

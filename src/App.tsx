@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import {
   LayoutDashboard, Package, FilePlus2, ClipboardCheck, PackagePlus,
-  History as HistoryIcon, BarChart3, Shield, UserCog, LogOut, Boxes, Menu, X,
+  History as HistoryIcon, BarChart3, Shield, UserCog, LogOut, Boxes, Menu, X, Megaphone,
 } from "lucide-react";
 import Login from "./screens/Login";
+import Announcements from "./screens/Announcements";
 import Dashboard from "./screens/Dashboard";
 import Inventory from "./screens/Inventory";
 import Requisition from "./screens/Requisition";
@@ -18,11 +19,12 @@ import type { User } from "./types";
 
 const STORAGE_KEY = "thamc_user";
 
-type TabId = "dashboard" | "inventory" | "requisition" | "approvals" | "goods-receipt" | "history" | "reports" | "admin" | "profile";
+type TabId = "announcements" | "dashboard" | "inventory" | "requisition" | "approvals" | "goods-receipt" | "history" | "reports" | "admin" | "profile";
 
 interface NavItem { id: TabId; label: string; icon: React.ComponentType<any>; roles?: string[]; }
 
 const NAV: NavItem[] = [
+  { id: "announcements", label: "ประกาศข่าวสาร", icon: Megaphone },
   { id: "dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
   { id: "requisition", label: "สร้างใบเบิก", icon: FilePlus2 },
   { id: "history", label: "ประวัติใบเบิก", icon: HistoryIcon },
@@ -37,7 +39,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(() => {
     try { const s = localStorage.getItem(STORAGE_KEY); return s ? (JSON.parse(s) as User) : null; } catch { return null; }
   });
-  const [tab, setTab] = useState<TabId>("dashboard");
+  const [tab, setTab] = useState<TabId>("announcements");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const setAndStore = (u: User | null) => {
@@ -95,13 +97,14 @@ export default function App() {
 
   const render = () => {
     switch (tab) {
+      case "announcements": return <Announcements user={user} />;
       case "dashboard": return <Dashboard user={user} />;
       case "inventory": return <Inventory user={user} />;
       case "requisition": return <Requisition user={user} onDone={() => setTab("history")} />;
       case "history": return <History user={user} />;
       case "approvals": return <Approvals user={user} />;
       case "goods-receipt": return <GoodsReceipt user={user} />;
-      case "reports": return <Reports />;
+      case "reports": return <Reports user={user} />;
       case "admin": return <Admin user={user} />;
       case "profile": return <Profile user={user} onUpdate={setAndStore} />;
       default: return <Dashboard user={user} />;

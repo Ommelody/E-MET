@@ -37,8 +37,14 @@ function baseStyle() {
     .signature-table{margin-top:44px;page-break-inside:avoid;line-height:1.6}
     .signature-table td{border:none;text-align:center;vertical-align:top;padding:10px}
     .sig-line{margin-bottom:34px;color:#94a3b8}
-    .footer-note{font-size:8pt;text-align:center;margin-top:28px;color:#94a3b8}`;
+    .footer-note{font-size:8pt;text-align:center;margin-top:28px;color:#94a3b8}
+    .print-bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:99}
+    .print-bar button{font-family:'Sarabun',sans-serif;font-size:10pt;font-weight:600;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .btn-print{background:#4f46e5;color:#fff}
+    @media print{.print-bar{display:none}body{margin:0}}`;
 }
+
+const PRINT_BAR = `<div class="print-bar"><button class="btn-print" onclick="window.print()">\uD83D\uDDA8\uFE0F พิมพ์ / บันทึก PDF</button></div>`;
 
 // ── ใบเบิกวัสดุ ────────────────────────────────────────────────
 export function buildRequisitionFormHtml(title: string, req: any, items: any[], grandTotal: number) {
@@ -57,6 +63,7 @@ export function buildRequisitionFormHtml(title: string, req: any, items: any[], 
   const stkDate = req.stockApprovalDate ? dateTH(req.stockApprovalDate) : ".........................";
 
   return `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><style>${baseStyle()}</style></head><body>
+    ${PRINT_BAR}
     <div class='header'>${title}</div>
     <div class='subheader'>เลขที่อ้างอิง: ${req.id} (สถานะ: ${req.status})</div>
     <table class="info-table">
@@ -105,6 +112,7 @@ export function buildGoodsIssueHtml(title: string, header: any, items: any[]) {
     .join("");
 
   return `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><style>${baseStyle()}</style></head><body>
+    ${PRINT_BAR}
     <div class='header'>${title}</div>
     <div class='subheader'>เลขที่ใบจ่าย: ${header.goodsIssueId} · อ้างอิงใบเบิก: ${header.id}</div>
     <table class="info-table">

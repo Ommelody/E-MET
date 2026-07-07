@@ -9,6 +9,7 @@ import { dashboardRouter } from "./modules/dashboard";
 import { reportsRouter } from "./modules/reports";
 import { adminRouter } from "./modules/admin";
 import { documentsRouter } from "./modules/documents";
+import { announcementsRouter } from "./modules/announcements";
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -23,6 +24,7 @@ app.use("/api/dashboard", dashboardRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/documents", documentsRouter);
+app.use("/api/announcements", announcementsRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

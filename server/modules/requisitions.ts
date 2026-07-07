@@ -374,6 +374,46 @@ requisitionsRouter.get("/pending", async (req, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+// export — คืน flat rows สำหรับเขียน Excel ฝั่ง client (ต้องอยู่ก่อน /:id)
+requisitionsRouter.get("/export", async (req, res) => {
+  try {
+    const { username = "", role = "", ...filters } = req.query as any;
+    const list = await getRequisitions(filters, username, role);
+    const ids = list.map((r) => r.id);
+    const items = ids.length ? await db.from("requisition_items").select("*").in("requisition_id", ids) : { data: [] as any[] };
+    const invMap: Record<string, any> = {};
+    const itemIds = [...new Set((items.data ?? []).map((i: any) => i.item_id))];
+    if (itemIds.length) {
+      const { data: invRows } = await db.from("inventory").select("id,code,location").in("id", itemIds);
+      (invRows ?? []).forEach((r: any) => (invMap[r.id.toString()] = r));
+    }
+    const byReq: Record<string, any[]> = {};
+    (items.data ?? []).forEach((it: any) => (byReq[it.requisition_id] ||= []).push(it));
+    const rows: any[] = [];
+    list.forEach((r: any) => {
+      (byReq[r.id] || []).forEach((it: any) => {
+        const inv = invMap[it.item_id?.toString()] || {};
+        rows.push({
+          "\u0e40ลขที่ใบเบิก": r.id,
+          "\u0e27ันที่เบิก": r.date,
+          "\u0e1cู้เบิก": r.requestorName,
+          "\u0e41ผนก": r.requestorDepartment,
+          "\u0e2aถานะ": r.status,
+          "\u0e23หัสพัสดุ": inv.code || "N/A",
+          "\u0e0aื่อพัสดุ": it.item_name,
+          "\u0e08ำนวนขอเบิก": it.quantity,
+          "\u0e08่ายจริง": it.dispensed_quantity || 0,
+          "\u0e2bน่วย": it.unit,
+          "\u0e23าคา/หน่วย": it.unit_price || 0,
+          "\u0e21ูลค่าจ่ายจริง": (it.dispensed_quantity || 0) * (it.unit_price || 0),
+          "\u0e04้างจ่าย": it.is_backordered ? "\u0e43ช่" : "\u0e44ม่",
+        });
+      });
+    });
+    res.json(rows);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 requisitionsRouter.post("/batch/list", async (req, res) => {
   try { res.json(await getRequisitionsForBatchApproval(req.body?.filters || {}, req.body?.user)); }
   catch (e: any) { res.status(500).json({ error: e.message }); }

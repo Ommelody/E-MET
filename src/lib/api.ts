@@ -58,6 +58,8 @@ export const requisitionApi = {
     request<any>("/requisitions/batch/by-item", { method: "POST", body: JSON.stringify(body) }),
   complete: (id: string, user: User) =>
     request<any>(`/requisitions/${id}/complete`, { method: "POST", body: JSON.stringify({ user }) }),
+  export: (filters: any, user: User) =>
+    request<any[]>(`/requisitions/export${qs({ ...filters, username: user.username, role: user.role })}`),
 };
 
 export const goodsReceiptApi = {
@@ -69,13 +71,13 @@ export const dashboardApi = {
 };
 
 export const reportsApi = {
-  inventory: () => request<any>("/reports/inventory"),
-  lowStock: () => request<any>("/reports/low-stock"),
-  transactions: (f: any) => request<any>(`/reports/transactions${qs(f)}`),
-  requisitions: (f: any) => request<any>(`/reports/requisitions${qs(f)}`),
-  byDepartment: (f: any) => request<any>(`/reports/by-department${qs(f)}`),
-  topItems: (f: any) => request<any>(`/reports/top-items${qs(f)}`),
-  backorders: () => request<any>("/reports/backorders"),
+  run: (type: string, filters: any) => request<any[]>(`/reports/${type}${qs(filters)}`),
+};
+
+export const announcementsApi = {
+  get: () => request<any>("/announcements"),
+  update: (actor: User, value: any) =>
+    request<any>("/announcements", { method: "PUT", body: JSON.stringify({ actorRole: actor.role, value }) }),
 };
 
 export const adminApi = {

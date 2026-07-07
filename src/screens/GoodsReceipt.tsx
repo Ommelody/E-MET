@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Search, PackagePlus, Upload } from "lucide-react";
+import { Plus, Trash2, Search, PackagePlus, Upload, FileSpreadsheet, Download, Save } from "lucide-react";
+import * as XLSX from "xlsx";
 import { inventoryApi, goodsReceiptApi } from "../lib/api";
 import { fmtBaht, fmtNumber, todayISO } from "../lib/format";
 import { Button, Card, Field, inputClass, Modal, EmptyState, PageHeader, useToast } from "../ui";
@@ -17,6 +18,52 @@ export default function GoodsReceipt({ user }: { user: User }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<"manual" | "excel">("manual");
+  const [xlFile, setXlFile] = useState<File | null>(null);
+  const [xlStatus, setXlStatus] = useState("");
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([["ItemCode", "QuantityReceived", "UnitPrice"]]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "THAMC_GoodsReceipt_Template.xlsx");
+  };
+
+  const importExcel = () => {
+    if (!xlFile) return toast.push({ type: "error", msg: "กรุณาเลือกไฟล์ Excel ก่อน" });
+    setSubmitting(true); setXlStatus("กำลังอ่านไฟล์…");
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(evt.target!.result as ArrayBuffer), { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false }) as any[];
+        if (json.length < 2) throw new Error("ไฟล์ไม่มีข้อมูลรายการ");
+        const h = (json[0] || []).map((x: any) => (x ? x.toString().trim() : ""));
+        const ci = h.indexOf("ItemCode"), qi = h.indexOf("QuantityReceived"), pi = h.indexOf("UnitPrice");
+        if (ci === -1 || qi === -1) throw new Error("หัวตารางต้องมี 'ItemCode' และ 'QuantityReceived'");
+        const rows: any[] = [];
+        for (let i = 1; i < json.length; i++) {
+          const r = json[i]; if (!r) continue;
+          const code = r[ci]?.toString().trim(); const qty = parseInt(r[qi]);
+          if (!code || isNaN(qty) || qty <= 0) continue;
+          let price = null;
+          if (pi !== -1 && r[pi] != null && r[pi].toString().trim() !== "") { const p = parseFloat(r[pi]); if (!isNaN(p) && p >= 0) price = p; }
+          rows.push({ itemCode: code, quantityReceived: qty, unitPrice: price });
+        }
+        if (!rows.length) throw new Error("ไม่พบรายการที่นำเข้าได้");
+        setXlStatus(`พบ ${rows.length} รายการ — กำลังบันทึก…`);
+        const res = await goodsReceiptApi.submit({
+          referenceNo: refNo || "Excel Import", receiptDate: date, notes,
+          receivedByUsername: user.username, source: "Excel Import", items: rows,
+        });
+        if (res.success) { toast.push({ type: "success", msg: `นำเข้า ${rows.length} รายการสำเร็จ` }); setXlFile(null); setXlStatus(""); inventoryApi.list().then(setItems); }
+        else setXlStatus("นำเข้าล้มเหลว: " + (res.message || "") + (res.details ? "\n" + res.details.filter((d: any) => !d.success).map((d: any) => `- ${d.itemCode}: ${d.message}`).join("\n") : ""));
+      } catch (e: any) { setXlStatus("ข้อผิดพลาด: " + e.message); }
+      finally { setSubmitting(false); }
+    };
+    reader.readAsArrayBuffer(xlFile);
+  };
 
   useEffect(() => { inventoryApi.list().then(setItems).catch((e) => toast.push({ type: "error", msg: e.message })); }, []);
 
@@ -56,6 +103,33 @@ export default function GoodsReceipt({ user }: { user: User }) {
     <div>
       <PageHeader title="รับวัสดุเข้าคลัง" subtitle="บันทึกการรับพัสดุเข้าสต๊อก (Goods Receipt)" />
 
+      <div className="mb-4 inline-flex gap-1 rounded-xl bg-slate-100 p-1">
+        <button onClick={() => setMode("manual")} className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-semibold transition ${mode === "manual" ? "bg-white text-slate-800 shadow-sm" : "bg-transparent text-slate-500"}`}><Save className="h-4 w-4" />กรอกด้วยตนเอง</button>
+        <button onClick={() => setMode("excel")} className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-semibold transition ${mode === "excel" ? "bg-white text-slate-800 shadow-sm" : "bg-transparent text-slate-500"}`}><FileSpreadsheet className="h-4 w-4" />นำเข้าไฟล์ Excel</button>
+      </div>
+
+      {mode === "excel" ? (
+        <Card className="mx-auto max-w-2xl p-6">
+          <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+            <span className="text-sm font-bold text-slate-700">ขั้นที่ 1: เตรียมไฟล์ตามเทมเพลต</span>
+            <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4" />โหลด Template</Button>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="เลขที่อ้างอิง"><input className={inputClass} value={refNo} onChange={(e) => setRefNo(e.target.value)} placeholder="เช่น Import-2568" /></Field>
+            <Field label="วันที่รับเข้า"><input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+            <div className="sm:col-span-2"><Field label="หมายเหตุ"><input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field></div>
+          </div>
+          <div className="mt-4">
+            <div className="relative rounded-xl border-2 border-dashed border-slate-300 p-6 text-center transition hover:border-emerald-500">
+              <Upload className="mx-auto mb-2 h-7 w-7 text-slate-400" />
+              <span className="block text-xs font-bold text-slate-700">{xlFile ? xlFile.name : "คลิกเลือกไฟล์ .xlsx"}</span>
+              <input type="file" accept=".xlsx,.xls" onChange={(e) => setXlFile(e.target.files?.[0] || null)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+            </div>
+          </div>
+          <Button variant="success" className="mt-4 w-full" onClick={importExcel} disabled={submitting || !xlFile}><Save className="h-4 w-4" />{submitting ? "กำลังประมวลผล…" : "นำเข้าสต๊อก"}</Button>
+          {xlStatus && <pre className="mt-4 max-h-48 overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">{xlStatus}</pre>}
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card className="mb-4 p-5">
@@ -109,6 +183,7 @@ export default function GoodsReceipt({ user }: { user: User }) {
           </Card>
         </div>
       </div>
+      )}
 
       <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="เลือกวัสดุที่รับเข้า" width="max-w-2xl">
         <div className="relative mb-4">

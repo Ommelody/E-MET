@@ -91,6 +91,31 @@ export default function History({ user }: { user: User }) {
       <Modal open={!!detail} onClose={() => setDetail(null)} title="รายละเอียดใบเบิก" width="max-w-3xl">
         {detailLoading || detail?.loading ? <Spinner /> : detail && (
           <div>
+            <div className="mb-5 grid grid-cols-4 gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-2 py-4 text-center">
+              {(() => {
+                const rq = detail.requisition;
+                const steps = [
+                  { n: 1, label: "ยื่นขอเบิก", sub: rq.requestorName, state: "done" },
+                  { n: 2, label: "อนุมัติ (ผจก.)", sub: rq.managerApprovalStatus || "รอพิจารณา",
+                    state: rq.managerApprovalDate ? "done" : rq.status === "Pending Manager Approval" ? "active" : "idle" },
+                  { n: 3, label: "จ่ายพัสดุ", sub: rq.stockApprovalStatus || "รอพิจารณา",
+                    state: rq.stockApprovalDate ? "done" : rq.status === "Pending Stock Approval" ? "active" : "idle" },
+                  { n: 4, label: "สิ้นสุด",
+                    sub: rq.status === "Completed" ? "จ่ายสำเร็จ" : rq.status === "Partially Completed" ? "มีค้างจ่าย" : rq.status.includes("Rejected") ? "ถูกปฏิเสธ" : "กำลังดำเนินการ",
+                    state: rq.status === "Completed" ? "done" : rq.status === "Partially Completed" ? "active" : rq.status.includes("Rejected") ? "reject" : "idle" },
+                ];
+                const bg = (s: string) => s === "done" ? "#16a34a" : s === "active" ? "#f59e0b" : s === "reject" ? "#e11d48" : "#e2e8f0";
+                const fg = (s: string) => s === "idle" ? "#94a3b8" : "#fff";
+                return steps.map((st) => (
+                  <div key={st.n} className="flex flex-col items-center">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold shadow" style={{ background: bg(st.state), color: fg(st.state) }}>{st.n}</div>
+                    <span className="mt-1.5 text-[11px] font-bold text-slate-700">{st.label}</span>
+                    <span className="text-[10px] text-slate-400">{st.sub}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+
             <div className="mb-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-4">
               <div><div className="text-[11px] text-slate-400">เลขที่</div><div className="font-mono font-semibold text-slate-700">{detail.requisition.id}</div></div>
               <div><div className="text-[11px] text-slate-400">วันที่</div><div className="text-slate-700">{fmtDate(detail.requisition.date)}</div></div>

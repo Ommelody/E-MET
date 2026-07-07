@@ -19,6 +19,7 @@ export default function Inventory({ user }: { user: User }) {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<{ base64: string; mime: string; preview: string } | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -122,7 +123,7 @@ export default function Inventory({ user }: { user: User }) {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {it.imageUrl ? (
-                            <img src={it.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                            <img src={it.imageUrl} alt="" onClick={() => setLightbox(it.imageUrl)} className="h-10 w-10 cursor-zoom-in rounded-lg object-cover transition hover:scale-105" />
                           ) : (
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-300"><ImageOff className="h-4 w-4" /></div>
                           )}
@@ -181,6 +182,13 @@ export default function Inventory({ user }: { user: User }) {
           <Button onClick={save} disabled={saving}>{saving ? "กำลังบันทึก…" : "บันทึก"}</Button>
         </div>
       </Modal>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+          <button onClick={() => setLightbox(null)} className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40">✕</button>
+          <img src={lightbox} alt="" className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl" />
+        </div>
+      )}
     </div>
   );
 }

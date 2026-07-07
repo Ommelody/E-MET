@@ -1,132 +1,237 @@
-import { useEffect, useState } from "react";
-import { CheckCircle2, XCircle, PackageCheck, Inbox, ClipboardCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, XCircle, PackageCheck, Inbox, ClipboardCheck, Lock, Loader2 } from "lucide-react";
 import { requisitionApi } from "../lib/api";
-import { fmtBaht, fmtNumber, fmtDate } from "../lib/format";
+import { fmtBaht, fmtNumber, fmtDate, fmtDateTime, statusLabel, STATUS_STYLES } from "../lib/format";
 import { Button, Card, inputClass, Modal, Spinner, EmptyState, PageHeader, Badge, useToast } from "../ui";
 import type { User } from "../types";
 
+const levelOf = (status: string) =>
+  status === "Pending Manager Approval" ? "manager"
+  : status === "Pending Stock Approval" ? "stock"
+  : status === "Partially Completed" ? "fulfill_backorder" : "";
+
 export default function Approvals({ user }: { user: User }) {
   const toast = useToast();
-  const canManager = ["Admin", "Manager"].includes(user.role);
-  const [level, setLevel] = useState<"manager" | "stock">(canManager ? "manager" : "stock");
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [batching, setBatching] = useState(false);
+
+  // detail modal
   const [active, setActive] = useState<any | null>(null);
-  const [draft, setDraft] = useState<Record<string, number>>({});
-  const [note, setNote] = useState("");
+  const [items, setItems] = useState<any[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [disp, setDisp] = useState<Record<string, number>>({});
+  const [bo, setBo] = useState<Record<string, boolean>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [approvalNote, setApprovalNote] = useState("");
   const [processing, setProcessing] = useState(false);
 
   const load = () => {
     setLoading(true);
-    requisitionApi.batchList({ level }, user).then((r) => setRows(Array.isArray(r) ? r : [])).catch((e) => toast.push({ type: "error", msg: e.message })).finally(() => setLoading(false));
+    setSelected(new Set());
+    requisitionApi.pending(user).then((r) => setRows(Array.isArray(r) ? r : [])).catch((e) => toast.push({ type: "error", msg: e.message })).finally(() => setLoading(false));
   };
-  useEffect(load, [level]);
+  useEffect(load, []);
 
-  const openReq = (r: any) => {
-    setActive(r);
-    setNote("");
-    const d: Record<string, number> = {};
-    (r.items || []).forEach((it: any) => {
-      d[it.itemId] = level === "stock" ? Math.min(it.quantity, it.currentInventoryQuantity ?? 0) : it.quantity;
-    });
-    setDraft(d);
+  const filtered = useMemo(() => rows.filter((r) => filter === "all" || r.status === filter), [rows, filter]);
+
+  // ── เปิดใบเบิก ────────────────────────────────────────────────
+  const open = async (r: any) => {
+    setActive(r); setItems([]); setApprovalNote(""); setDetailLoading(true);
+    try {
+      const d = await requisitionApi.details(r.id);
+      const its = d.items || [];
+      setItems(its);
+      const level = levelOf(r.status);
+      const nd: Record<string, number> = {}, nb: Record<string, boolean> = {}, nn: Record<string, string> = {};
+      its.forEach((it: any) => {
+        const reqQty = it.quantity || 0, stock = it.currentInventoryQuantity ?? 0, already = it.dispensedQuantity || 0;
+        if (level === "manager") nd[it.itemId] = Math.min(reqQty, stock);
+        else if (level === "stock") nd[it.itemId] = Math.min(reqQty, stock);
+        else if (level === "fulfill_backorder") nd[it.itemId] = it.isBackordered ? Math.min(reqQty - already, stock) : 0;
+        nb[it.itemId] = it.isBackordered; nn[it.itemId] = it.notesForItem || "";
+      });
+      setDisp(nd); setBo(nb); setNotes(nn);
+    } catch (e: any) { toast.push({ type: "error", msg: e.message }); setActive(null); }
+    finally { setDetailLoading(false); }
   };
 
   const decide = async (decision: "Approved" | "Rejected") => {
     if (!active) return;
+    const level = levelOf(active.status);
+    if (decision === "Rejected" && !approvalNote.trim()) return toast.push({ type: "error", msg: "กรุณาระบุเหตุผลการปฏิเสธ" });
+    // validate stock
+    for (const it of items) {
+      const q = disp[it.itemId] || 0;
+      if (decision === "Approved" && (level === "stock" || level === "fulfill_backorder") && !bo[it.itemId] && q > (it.currentInventoryQuantity ?? 0)) {
+        return toast.push({ type: "error", msg: `"${it.itemName}" จ่าย ${q} เกินคงเหลือ (${it.currentInventoryQuantity})` });
+      }
+    }
     setProcessing(true);
     try {
-      if (level === "manager" || decision === "Rejected") {
-        await requisitionApi.approve(active.id, { approverUsername: user.username, approvalLevel: level, approvalDecision: decision, notes: note, dispensedItems: [] });
-      } else {
-        const dispensedItems = (active.items || []).map((it: any) => ({
-          itemId: it.itemId, itemName: it.itemName, unit: it.unit,
-          dispensedQuantity: draft[it.itemId] ?? 0,
-          isBackordered: (draft[it.itemId] ?? 0) < it.quantity,
-          itemNote: "",
-        }));
-        await requisitionApi.approve(active.id, { approverUsername: user.username, approvalLevel: "stock", approvalDecision: "Approved", notes: note, dispensedItems });
-      }
-      toast.push({ type: "success", msg: decision === "Approved" ? "อนุมัติสำเร็จ" : "ปฏิเสธใบเบิกแล้ว" });
-      setActive(null);
-      load();
-    } catch (e: any) {
-      toast.push({ type: "error", msg: e.message });
-    } finally { setProcessing(false); }
+      const dispensedItems = items.map((it: any) => ({
+        itemId: it.itemId, itemName: it.itemName, unit: it.unit,
+        dispensedQuantity: disp[it.itemId] || 0, isBackordered: bo[it.itemId] || false, itemNote: (notes[it.itemId] || "").trim(),
+      }));
+      const res = await requisitionApi.approve(active.id, { approverUsername: user.username, approvalLevel: level, approvalDecision: decision, notes: approvalNote, dispensedItems });
+      if (res.success) { toast.push({ type: "success", msg: `อัปเดตสถานะเป็น: ${statusLabel(res.newStatus)}` }); setActive(null); load(); }
+      else toast.push({ type: "error", msg: res.message || "ไม่สำเร็จ" });
+    } catch (e: any) { toast.push({ type: "error", msg: e.message }); }
+    finally { setProcessing(false); }
   };
+
+  const forceComplete = async () => {
+    if (!active) return;
+    if (!confirm(`บังคับปิดงานใบเบิก #${active.id}? รายการค้างจ่ายที่เหลือจะถูกยกเลิก`)) return;
+    setProcessing(true);
+    try {
+      const res = await requisitionApi.complete(active.id, user);
+      if (res.success) { toast.push({ type: "success", msg: "ปิดงานเป็น 'เสร็จสิ้น' แล้ว" }); setActive(null); load(); }
+      else toast.push({ type: "error", msg: res.message });
+    } catch (e: any) { toast.push({ type: "error", msg: e.message }); }
+    finally { setProcessing(false); }
+  };
+
+  // ── batch (เฉพาะสถานะเดียวกัน manager/stock) ───────────────────
+  const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const selectedRows = filtered.filter((r) => selected.has(r.id));
+  const batchLevel = selectedRows.length && selectedRows.every((r) => r.status === selectedRows[0].status) ? levelOf(selectedRows[0].status) : "";
+  const canBatch = (batchLevel === "manager" && ["Admin", "Manager"].includes(user.role)) || (batchLevel === "stock" && ["Admin", "Manager", "Staff"].includes(user.role));
+
+  const runBatch = async (decision: "Approved" | "Rejected") => {
+    if (!canBatch) return toast.push({ type: "error", msg: "เลือกใบเบิกที่อยู่สถานะเดียวกัน (อนุมัติผจก. หรือ จ่ายพัสดุ)" });
+    if (decision === "Rejected" && !confirm("ยืนยันปฏิเสธใบเบิกที่เลือกทั้งหมด?")) return;
+    setBatching(true);
+    try {
+      const res = await requisitionApi.batchApprove({
+        requisitionIds: [...selected], approverUsername: user.username, approvalLevel: batchLevel, approvalDecision: decision,
+        notes: decision === "Approved" ? "อนุมัติเป็นชุด" : "ปฏิเสธเป็นชุด",
+      });
+      if (res.success) { toast.push({ type: "success", msg: `ดำเนินการ ${res.processedCount} ใบสำเร็จ` }); load(); }
+      else toast.push({ type: "error", msg: res.message });
+    } catch (e: any) { toast.push({ type: "error", msg: e.message }); }
+    finally { setBatching(false); }
+  };
+
+  const level = active ? levelOf(active.status) : "";
+  const editable = level === "stock" || level === "fulfill_backorder";
 
   return (
     <div>
-      <PageHeader title="อนุมัติใบเบิก" subtitle="ตรวจสอบและดำเนินการกับใบเบิกที่รอการอนุมัติ" />
+      <PageHeader title="อนุมัติใบเบิก" subtitle="พิจารณา / จ่ายพัสดุ / จ่ายของค้าง — ทีละใบหรือเป็นชุด" />
 
-      <div className="mb-4 inline-flex gap-1 rounded-xl bg-slate-100 p-1">
-        {canManager && <button onClick={() => setLevel("manager")} className={`cursor-pointer rounded-lg border-none px-4 py-2 text-sm font-semibold transition ${level === "manager" ? "bg-white text-slate-800 shadow-sm" : "bg-transparent text-slate-500"}`}>รออนุมัติ (หัวหน้างาน)</button>}
-        <button onClick={() => setLevel("stock")} className={`cursor-pointer rounded-lg border-none px-4 py-2 text-sm font-semibold transition ${level === "stock" ? "bg-white text-slate-800 shadow-sm" : "bg-transparent text-slate-500"}`}>รอจ่ายพัสดุ</button>
-      </div>
-
-      {loading ? <Spinner label="กำลังโหลด…" /> : rows.length === 0 ? (
-        <Card><EmptyState icon={<Inbox className="h-6 w-6" />} title="ไม่มีใบเบิกรอดำเนินการ" hint="รายการที่รออนุมัติในระดับนี้จะปรากฏที่นี่" /></Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map((r) => (
-            <Card key={r.id} className="flex flex-col p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="font-mono text-xs font-bold text-slate-700">{r.id}</div>
-                  <div className="mt-0.5 text-sm font-semibold text-slate-700">{r.requestorName}</div>
-                  <div className="text-[11px] text-slate-400">{r.requestorDepartment} · {fmtDate(r.date)}</div>
-                </div>
-                <Badge bg="#eef2ff" color="#4338ca">{fmtNumber((r.items || []).length)} รายการ</Badge>
-              </div>
-              <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs text-slate-500">{r.purpose || "ไม่ระบุวัตถุประสงค์"}</p>
-              <Button className="mt-3" variant="outline" onClick={() => openReq(r)}><ClipboardCheck className="h-4 w-4" />ตรวจสอบ / ดำเนินการ</Button>
-            </Card>
-          ))}
+      <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500">กรองสถานะ</span>
+          <select className={inputClass + " max-w-[220px]"} value={filter} onChange={(e) => { setFilter(e.target.value); setSelected(new Set()); }}>
+            <option value="all">ทุกสถานะที่รอดำเนินการ</option>
+            <option value="Pending Manager Approval">รออนุมัติ (หัวหน้างาน)</option>
+            <option value="Pending Stock Approval">รอจ่ายพัสดุ</option>
+            <option value="Partially Completed">จ่ายบางส่วน (ค้างจ่าย)</option>
+          </select>
         </div>
+        {selected.size > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">เลือก {selected.size} ใบ</span>
+            <Button size="sm" variant="success" onClick={() => runBatch("Approved")} disabled={batching || !canBatch}><CheckCircle2 className="h-4 w-4" />อนุมัติเป็นชุด</Button>
+            <Button size="sm" variant="danger" onClick={() => runBatch("Rejected")} disabled={batching || !canBatch}><XCircle className="h-4 w-4" />ปฏิเสธเป็นชุด</Button>
+          </div>
+        )}
+      </Card>
+
+      {loading ? <Spinner label="กำลังโหลด…" /> : filtered.length === 0 ? (
+        <Card><EmptyState icon={<Inbox className="h-6 w-6" />} title="ไม่มีใบเบิกรอดำเนินการ" /></Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-slate-100 bg-slate-50/70 text-left text-xs font-semibold text-slate-500">
+                <th className="w-10 px-4 py-3"></th>
+                <th className="px-4 py-3">เลขที่</th><th className="px-4 py-3">วันที่</th><th className="px-4 py-3">ผู้เบิก</th>
+                <th className="px-4 py-3">สถานะ</th><th className="px-4 py-3 text-right"></th>
+              </tr></thead>
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map((r) => {
+                  const s = STATUS_STYLES[r.status] || { bg: "#f1f5f9", color: "#475569" };
+                  const batchable = r.status === "Pending Manager Approval" || r.status === "Pending Stock Approval";
+                  return (
+                    <tr key={r.id} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3">{batchable && <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)} className="h-4 w-4 cursor-pointer" />}</td>
+                      <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-700">{r.id}</td>
+                      <td className="px-4 py-3 text-slate-500">{fmtDate(r.date)}</td>
+                      <td className="px-4 py-3"><div className="text-slate-700">{r.requestorName}</div><div className="text-[11px] text-slate-400">{r.requestorDepartment}</div></td>
+                      <td className="px-4 py-3"><Badge bg={s.bg} color={s.color}>{statusLabel(r.status)}</Badge></td>
+                      <td className="px-4 py-3 text-right"><Button size="sm" variant="outline" onClick={() => open(r)}><ClipboardCheck className="h-4 w-4" />{r.status === "Partially Completed" ? "จ่ายของค้าง" : "ตรวจสอบ"}</Button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
-      <Modal open={!!active} onClose={() => setActive(null)} title={`ดำเนินการใบเบิก ${active?.id || ""}`} width="max-w-3xl">
-        {active && (
+      <Modal open={!!active} onClose={() => setActive(null)} title={`ดำเนินการใบเบิก ${active?.id || ""}`} width="max-w-4xl">
+        {detailLoading ? <div className="flex items-center justify-center py-10 text-slate-400"><Loader2 className="h-6 w-6 animate-spin" /></div> : active && (
           <div>
-            <div className="mb-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-3">
+            <div className="mb-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-4">
               <div><div className="text-[11px] text-slate-400">ผู้เบิก</div><div className="text-slate-700">{active.requestorName}</div></div>
               <div><div className="text-[11px] text-slate-400">แผนก</div><div className="text-slate-700">{active.requestorDepartment}</div></div>
               <div><div className="text-[11px] text-slate-400">วันที่</div><div className="text-slate-700">{fmtDate(active.date)}</div></div>
-              <div className="col-span-2 sm:col-span-3"><div className="text-[11px] text-slate-400">วัตถุประสงค์</div><div className="text-slate-700">{active.purpose || "-"}</div></div>
+              <div><div className="text-[11px] text-slate-400">สถานะ</div><div className="text-slate-700">{statusLabel(active.status)}</div></div>
+              <div className="col-span-2 sm:col-span-4"><div className="text-[11px] text-slate-400">วัตถุประสงค์</div><div className="text-slate-700">{active.purpose || "-"}</div></div>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-slate-100">
-              <table className="w-full text-sm">
-                <thead><tr className="bg-slate-50/70 text-left text-xs font-semibold text-slate-500">
+            <div className="overflow-x-auto rounded-xl border border-slate-100">
+              <table className="w-full text-xs">
+                <thead><tr className="bg-slate-50/70 text-left font-semibold text-slate-500">
                   <th className="px-3 py-2.5">วัสดุ</th><th className="px-3 py-2.5 text-center">ขอเบิก</th><th className="px-3 py-2.5 text-center">คงเหลือ</th>
-                  {level === "stock" && <th className="px-3 py-2.5 text-center">จ่ายครั้งนี้</th>}
+                  {editable && <th className="px-3 py-2.5 text-center">จ่ายครั้งนี้</th>}
+                  {editable && <th className="px-3 py-2.5 text-center">ค้างจ่าย / หมายเหตุ</th>}
+                  <th className="px-3 py-2.5 text-right">มูลค่า</th>
                 </tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                  {(active.items || []).map((it: any) => (
-                    <tr key={it.itemId}>
-                      <td className="px-3 py-2.5"><div className="font-medium text-slate-700">{it.itemName}</div><div className="font-mono text-[11px] text-slate-400">{it.itemCode}</div></td>
-                      <td className="px-3 py-2.5 text-center text-slate-600">{fmtNumber(it.quantity)} {it.unit}</td>
-                      <td className="px-3 py-2.5 text-center"><span className={((it.currentInventoryQuantity ?? 0) < it.quantity) ? "text-amber-600" : "text-slate-600"}>{fmtNumber(it.currentInventoryQuantity ?? 0)}</span></td>
-                      {level === "stock" && (
-                        <td className="px-3 py-2.5 text-center">
-                          <input type="number" min={0} max={it.currentInventoryQuantity ?? 0} className={inputClass + " mx-auto w-20 text-center"} value={draft[it.itemId] ?? 0} onChange={(e) => setDraft({ ...draft, [it.itemId]: Math.max(0, Math.min(parseInt(e.target.value) || 0, it.currentInventoryQuantity ?? 0)) })} />
-                          {(draft[it.itemId] ?? 0) < it.quantity && <div className="mt-0.5 text-[10px] text-amber-500">ค้างจ่าย {fmtNumber(it.quantity - (draft[it.itemId] ?? 0))}</div>}
-                        </td>
-                      )}
-                    </tr>
-                  ))}
+                  {items.map((it: any) => {
+                    const stock = it.currentInventoryQuantity ?? 0;
+                    return (
+                      <tr key={it.itemId} className="align-top">
+                        <td className="px-3 py-2.5"><div className="font-medium text-slate-700">{it.itemName}</div><div className="font-mono text-[11px] text-slate-400">{it.itemCode} · {it.unit}</div></td>
+                        <td className="px-3 py-2.5 text-center text-slate-600">{fmtNumber(it.quantity)}</td>
+                        <td className="px-3 py-2.5 text-center"><span className={stock < it.quantity ? "text-amber-600" : "text-slate-600"}>{fmtNumber(stock)}</span></td>
+                        {editable && (
+                          <td className="px-3 py-2.5 text-center">
+                            <input type="number" min={0} disabled={bo[it.itemId]} className={inputClass + " mx-auto w-20 text-center disabled:opacity-40"} value={disp[it.itemId] ?? 0}
+                              onChange={(e) => setDisp({ ...disp, [it.itemId]: Math.max(0, Math.min(parseInt(e.target.value) || 0, stock)) })} />
+                          </td>
+                        )}
+                        {editable && (
+                          <td className="px-3 py-2.5">
+                            <label className="flex items-center justify-center gap-1 text-[11px] font-semibold text-rose-600">
+                              <input type="checkbox" checked={bo[it.itemId] || false} onChange={(e) => { const c = e.target.checked; setBo({ ...bo, [it.itemId]: c }); setDisp({ ...disp, [it.itemId]: c ? 0 : Math.min(it.quantity, stock) }); }} />
+                              ค้างจ่าย
+                            </label>
+                            <input placeholder="หมายเหตุ…" className="mt-1 w-full rounded border border-slate-200 bg-slate-50 px-1.5 py-1 text-[11px]" value={notes[it.itemId] || ""} onChange={(e) => setNotes({ ...notes, [it.itemId]: e.target.value })} />
+                          </td>
+                        )}
+                        <td className="px-3 py-2.5 text-right font-medium text-slate-700">{fmtBaht((disp[it.itemId] ?? 0) * (it.UnitPrice || 0))}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            <div className="mt-4">
-              <textarea className={inputClass} rows={2} placeholder="หมายเหตุ (ถ้ามี)" value={note} onChange={(e) => setNote(e.target.value)} />
-            </div>
+            <textarea className={inputClass + " mt-4"} rows={2} placeholder="หมายเหตุการอนุมัติ / เหตุผลการปฏิเสธ" value={approvalNote} onChange={(e) => setApprovalNote(e.target.value)} />
 
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="danger" onClick={() => decide("Rejected")} disabled={processing}><XCircle className="h-4 w-4" />ปฏิเสธ</Button>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              {active.status === "Partially Completed" && ["Admin", "Manager"].includes(user.role) && (
+                <Button variant="outline" onClick={forceComplete} disabled={processing}><Lock className="h-4 w-4" />บังคับปิดงาน</Button>
+              )}
+              {level !== "fulfill_backorder" && <Button variant="danger" onClick={() => decide("Rejected")} disabled={processing}><XCircle className="h-4 w-4" />ปฏิเสธ</Button>}
               <Button variant="success" onClick={() => decide("Approved")} disabled={processing}>
-                {level === "stock" ? <><PackageCheck className="h-4 w-4" />ยืนยันการจ่าย</> : <><CheckCircle2 className="h-4 w-4" />อนุมัติ</>}
+                {editable ? <><PackageCheck className="h-4 w-4" />ยืนยันการจ่าย</> : <><CheckCircle2 className="h-4 w-4" />อนุมัติ</>}
               </Button>
             </div>
           </div>
