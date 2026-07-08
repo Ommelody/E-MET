@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../supabase";
+import { hashPassword } from "../lib/password";
 
 export const adminRouter = Router();
 
@@ -36,7 +37,7 @@ adminRouter.put("/users/:username", async (req, res) => {
     if (!ROLES.includes(b.role)) return res.status(400).json({ error: "สิทธิ์ไม่ถูกต้อง" });
     upd.role = b.role;
   }
-  if (b.password) upd.password = "hashed_" + b.password;
+  if (b.password) upd.password = await hashPassword(b.password);
 
   const { data, error } = await db.from("users").update(upd).eq("username", req.params.username).select("username");
   if (error) return res.status(500).json({ error: error.message });

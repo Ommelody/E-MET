@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db } from "../supabase.js";
+import { hashPassword, verifyPassword, needsUpgrade } from "../lib/password.js";
 
 /**
- * โมดูล Auth — คงพฤติกรรมเดิมจากระบบเก่าไว้ทุกอย่าง
- * (รหัสผ่านเก็บเป็น "hashed_" + <plaintext> — เช็กฝั่งเซิร์ฟเวอร์)
- * บัญชีเดิมทั้งหมดยังล็อกอินได้เหมือนเดิม
+ * โมดูล Auth — คงพฤติกรรม/ข้อมูลผู้ใช้เดิมทั้งหมดไว้
+ * รหัสผ่านตอนนี้ใช้ bcrypt (ปลอดภัย) — บัญชีเก่าที่ยังเป็นรูปแบบเดิม
+ * จะถูกอัปเกรดเป็น bcrypt อัตโนมัติทันทีที่ล็อกอินสำเร็จ ไม่ต้องทำอะไรเพิ่ม
  */
 export const authRouter = Router();
 
@@ -33,15 +34,22 @@ authRouter.post("/login", async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  if (user && user.password === "hashed_" + password) {
-    return res.json({
-      username: user.username,
-      name: user.name,
-      department: user.department,
-      role: user.role,
-    });
+  if (!user || !(await verifyPassword(password, user.password))) {
+    return res.status(401).json({ error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
   }
-  return res.status(401).json({ error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+
+  // อัปเกรดรหัสผ่านรูปแบบเก่าเป็น bcrypt แบบเงียบ ๆ เบื้องหลัง
+  if (needsUpgrade(user.password)) {
+    const newHash = await hashPassword(password);
+    db.from("users").update({ password: newHash }).eq("username", user.username).then(() => {});
+  }
+
+  return res.json({
+    username: user.username,
+    name: user.name,
+    department: user.department,
+    role: user.role,
+  });
 });
 
 // ── ลงทะเบียนผู้ใช้ใหม่ ────────────────────────────────────────
@@ -62,7 +70,7 @@ authRouter.post("/register", async (req, res) => {
 
   const { error } = await db.from("users").insert({
     username,
-    password: "hashed_" + password,
+    password: await hashPassword(password),
     name,
     department,
     role: role || "User",
@@ -82,7 +90,7 @@ authRouter.put("/profile", async (req, res) => {
     department,
     updated_at: new Date().toISOString(),
   };
-  if (password) updateData.password = "hashed_" + password;
+  if (password) updateData.password = await hashPassword(password);
 
   const { data, error } = await db
     .from("users")
