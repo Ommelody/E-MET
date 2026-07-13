@@ -1,47 +1,76 @@
-# THAMC e-Material v2 (rewrite)
+# ระบบ ERP ศูนย์การแพทย์ธรรมศาสตร์ (THAMC ERP)
 
-เขียนใหม่ทั้งระบบ — React + Vite (frontend) + Express + `@supabase/supabase-js` (backend)
-ใช้ **ฐานข้อมูล Supabase เดิม** โดย service key อยู่ฝั่งเซิร์ฟเวอร์ (อ่านจาก env)
+ระบบเสนอขออนุมัติงบประมาณ (BR) → ใบขอซื้อ (PR) → ติดตามการจัดซื้อ/จ่ายเงิน
+ที่ทำงานร่วมกับ SAP โดยไม่ต้อง Interface — เจ้าหน้าที่จัดซื้อกรอกเลขที่ PO
+ลงในระบบ แล้วระบบจะดึงข้อมูล SAP มาเดินไทม์ไลน์ต่อจนจบกระบวนการ
 
-## โครงสร้าง
+บันทึกข้อมูลจริงบน **Supabase** (PostgreSQL) — ใช้งานหลายคนพร้อมกันได้
+
+---
+
+## โครงสร้างไฟล์
+
+| ไฟล์ | คำอธิบาย |
+|------|----------|
+| `index.html` | ตัวระบบทั้งหมด (เปิดในเบราว์เซอร์ได้เลย) |
+| `support.js` | ไลบรารีรันไทม์ของหน้าเว็บ (ต้องอยู่คู่กับ index.html) |
+| `erp-data.js` | ข้อมูล SAP ตั้งต้น (PO/GR/ตั้งหนี้/จ่าย) + ข้อมูลตัวอย่าง BR/PR |
+| `assets/thamc_logo.jpg` | หัวกระดาษราชการ (ใช้บนเอกสาร BR/PR) |
+| `supabase-schema.sql` | สคริปต์สร้างตาราง BR/PR + เปิดสิทธิ์ (รันก่อน) |
+| `supabase-seed-sap.sql` | สคริปต์โหลดข้อมูล SAP จาก Excel ลงฐานข้อมูล (รันทีหลัง) |
+
+---
+
+## วิธีติดตั้ง
+
+### 1) เตรียมฐานข้อมูล Supabase
+1. เข้า Supabase project → **SQL Editor** → **New query**
+2. วางเนื้อหาไฟล์ `supabase-schema.sql` ทั้งหมด → **Run** (สร้างตาราง `budget_requests`, `purchase_requests`, `item_code_requests`)
+3. (ทดสอบด้วยข้อมูลจริง) วางเนื้อหา `supabase-seed-sap.sql` → **Run**
+   (สร้าง `sap_po`, `sap_ap`, `sap_payment` + ใส่ข้อมูลจริงจาก Excel)
+
+### 2) ตั้งค่า connection (ถ้าเปลี่ยนโปรเจกต์)
+เปิด `index.html` แก้ 2 บรรทัดในคลาส `Component`:
+```js
+SUPA_URL='https://<PROJECT_REF>.supabase.co';
+SUPA_KEY='<anon public key>';
 ```
-thamc-v2/
-├─ .env.example          # ก๊อปเป็น .env แล้วกรอกค่า Supabase
-├─ Dockerfile / render.yaml
-├─ docs/
-│  ├─ SCHEMA.md          # โครงสร้างฐานข้อมูล (ยืนยันกับ DB จริงแล้ว)
-│  └─ supabase-verify.sql
-├─ server/               # backend
-│  ├─ config.ts          # โหลด/ตรวจ env
-│  ├─ supabase.ts        # admin client (service_role, ข้าม RLS)
-│  ├─ index.ts           # Express + เสิร์ฟหน้าเว็บ
-│  └─ modules/auth.ts    # /api/auth (login, register, profile, departments)
-└─ src/                  # frontend (React)
-   ├─ lib/api.ts         # เรียก API แบบ same-origin
-   ├─ screens/Login.tsx  # หน้าล็อกอินดีไซน์ใหม่
-   └─ App.tsx
-```
+> ใช้ **anon public key** เท่านั้น (ปลอดภัยสำหรับฝั่งเว็บ) — อย่าใส่ service_role key
 
-## รันในเครื่อง
-```bash
-cd thamc-v2
-cp .env.example .env      # แล้วกรอก SUPABASE_URL + SUPABASE_SERVICE_KEY
-npm install
-npm run dev               # http://localhost:3000
-```
+### 3) เผยแพร่ (GitHub Pages)
+1. สร้าง repo ใหม่ → อัปโหลดไฟล์ทั้งหมด (คงโครงสร้างโฟลเดอร์ `assets/`)
+2. **Settings → Pages** → Source: `main` / root → Save
+3. เปิด URL ที่ได้ (เช่น `https://<user>.github.io/<repo>/`)
 
-## Deploy (รวม frontend+backend ที่เดียว)
-- **Render:** New → Blueprint → เลือก repo → ตั้ง env `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
-- **Docker:** `docker build -t thamc-v2 . && docker run -p 3000:3000 --env-file .env thamc-v2`
+ครั้งแรกที่เปิด ระบบจะเชื่อม Supabase อัตโนมัติ และถ้าตารางยังว่างจะเติมข้อมูลตัวอย่างให้
+มุมขวาบนจะแสดงสถานะ **"เชื่อมต่อ Supabase"** (เขียว) — คลิกที่ป้ายเพื่อเชื่อมต่อใหม่ได้
 
-## สถานะการพัฒนา
-- [x] Backend foundation (config, supabase client, express)
-- [x] โมดูล Auth (login / register / profile / departments)
-- [x] Frontend scaffold + หน้าล็อกอิน (ต่อ API จริง)
-- [x] โมดูล Inventory (คลังพัสดุ + CRUD + รูป + ตัดสต๊อก)
-- [x] โมดูล Requisitions + การอนุมัติ (หัวหน้างาน → พัสดุ → จ่ายของ/ค้างจ่าย)
-- [x] Goods Receipt (รับวัสดุเข้าคลัง)
-- [x] Dashboard, Reports (7 รายงาน + CSV), Admin, Profile
-- [x] ระบบเอกสาร (ใบเบิก/ใบจ่าย) ผ่าน signed URL (bucket pdfs เป็น private)
+---
 
-> ⚠️ เอกสารสร้างเป็น HTML (เปิดในเบราว์เชอร์แล้วสั่ง Print → Save as PDF ได้) เหมือนระบบเดิม
+## ฟังก์ชันหลัก
+
+- **ขออนุมัติงบประมาณ (BR)** → ผู้บริหารพิจารณา → งบประมาณจัดสรร (ตรวจ/ส่งออกรหัส Item Master Pro)
+- **Copy to PR** — สร้างใบขอซื้อจาก BR ที่ได้รับจัดสรรงบแล้ว
+- **พัสดุรับเรื่อง** → กรอกเลขที่ PO + แนบเอกสาร → ระบบดึง SAP เดินไทม์ไลน์ (รับของ/ตั้งหนี้/จ่าย) ต่อเอง
+- **แจ้งเตือนกำหนดทำ PR** — กระดิ่งมุมบนขวา แจ้งรายการที่ใกล้/เกินวันที่หน่วยงานต้องการใช้พัสดุ
+- **เอกสาร BR/PR** — ใบขออนุมัติงบประมาณ + ใบเสนอความต้องการซื้อ/จ้าง/เช่า (แบบฟอร์มราชการเดิม + หัวกระดาษ THAMC + QR ติดตามสถานะ + พิมพ์/บันทึก PDF)
+- **ติดตามสถานะ / สแกน QR** — ค้นเลขเอกสาร แสดงไทม์ไลน์เต็ม
+- **แดชบอร์ด** — ภาพรวม / งบประมาณ / จัดซื้อทั้งกระบวนการ (คลิกดูความสัมพันธ์ PO→GR→AP→จ่าย) / จ่ายเงิน — ทุกบทบาทเข้าถึงได้ ยกเว้นผู้ขอซื้อที่ใช้หน้า "ติดตามสถานะ"
+- **นำเข้าข้อมูล SAP** — อัปโหลดรายงาน Budget / PO / GR / A/P / Payment แทนการ interface; เชื่อมโยงเอกสารด้วยเลขที่งบประมาณ (Budget Reserve No) + เลขที่ PO
+- **ตัดงบจริงตามเลขที่งบประมาณ** — เลือก Budget Reserve No ตอนขอจัดสรรงบ ระบบเช็คยอดคงเหลือ (Available) จากรายงาน SAP
+- **หน้าตั้งค่าระบบ** — จัดการผู้ใช้/สิทธิ์ + ตั้งค่าจำนวนวันแจ้งเตือนก่อนถึงกำหนดใช้พัสดุ แยกวงเงิน ≤500,000 / >500,000
+- **Export Excel → SAP** — ส่งออกรหัส 19 คอลัมน์ ตามรูปแบบ import ของ SAP
+- **PWA** — ติดตั้งเป็นแอปบนมือถือได้ (ปุ่มที่หน้าล็อกอิน) ใช้งานออฟไลน์ผ่าน service worker
+- **6 บทบาท** — ผู้ดูแลระบบ / ผู้ขอซื้อ / งบประมาณ / พัสดุ-จัดซื้อ / การเงิน / ผู้บริหาร (สลับได้มุมบนขวา)
+- **รองรับมือถือ** เต็มรูปแบบ
+
+### Flow การทำงาน
+`ผู้ขอยื่นขอจัดสรรงบ (BR) → ผู้บริหารอนุมัติ / ไม่อนุมัติ / ส่งกลับแก้ไข → งบประมาณจัดสรร + ตรวจรหัส Item Pro → Copy to PR → พัสดุรับเรื่อง → กรอกเลข PO → ระบบดึง SAP เดินไทม์ไลน์ (รับของ/ตั้งหนี้/จ่าย) ต่อจนจบ`
+(ผู้ขอสามารถสร้างใบขอซื้อ PR ได้โดยตรงโดยไม่ต้องผ่าน BR ก็ได้)
+
+---
+
+## หมายเหตุด้านความปลอดภัย
+
+สคริปต์ SQL เปิด Row Level Security แบบอนุญาต `anon` อ่าน/เขียนได้ (เหมาะกับช่วง **นำร่อง/ทดลอง**)
+ก่อนใช้งานจริงจัง ควรผูกกับระบบยืนยันตัวตน (Supabase Auth) และปรับ policy ให้จำกัดตาม `auth.uid()` / บทบาทผู้ใช้
