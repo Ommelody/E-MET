@@ -1,10 +1,29 @@
-# ── Supabase (ต้องกรอกจริงในไฟล์ .env — ห้าม commit .env ขึ้น git) ──
-# นำมาจาก Supabase Dashboard -> Project Settings -> API
-SUPABASE_URL="https://xxxxxxxx.supabase.co"
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>THAMC e-Material</title>
 
-# service_role key (สิทธิ์สูงสุด ข้าม RLS) — เก็บฝั่งเซิร์ฟเวอร์เท่านั้น
-# ห้ามนำไปใส่ในโค้ด frontend เด็ดขาด
-SUPABASE_SERVICE_KEY="eyJhbGciOi..."
+    <!-- Favicon (กล่องพัสดุ) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
+    <link rel="icon" href="/favicon.ico" />
 
-# พอร์ตของเซิร์ฟเวอร์ (โฮสต์อย่าง Render/Cloud Run จะ inject มาให้เอง)
-PORT=3000
+    <!-- PWA / Add to Home Screen (Android · iOS · Windows) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#5b4df6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="e-Material" />
+    <!-- Windows tiles -->
+    <meta name="msapplication-TileColor" content="#5b4df6" />
+    <meta name="msapplication-TileImage" content="/icon-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
