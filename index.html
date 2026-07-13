@@ -1,0 +1,10 @@
+# ── Supabase (ต้องกรอกจริงในไฟล์ .env — ห้าม commit .env ขึ้น git) ──
+# นำมาจาก Supabase Dashboard -> Project Settings -> API
+SUPABASE_URL="https://xxxxxxxx.supabase.co"
+
+# service_role key (สิทธิ์สูงสุด ข้าม RLS) — เก็บฝั่งเซิร์ฟเวอร์เท่านั้น
+# ห้ามนำไปใส่ในโค้ด frontend เด็ดขาด
+SUPABASE_SERVICE_KEY="eyJhbGciOi..."
+
+# พอร์ตของเซิร์ฟเวอร์ (โฮสต์อย่าง Render/Cloud Run จะ inject มาให้เอง)
+PORT=3000
