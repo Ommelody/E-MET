@@ -72,8 +72,8 @@ export function Modal({ open, onClose, title, children, width = "max-w-lg" }: {
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className={`my-8 w-full ${width} rounded-2xl bg-white shadow-2xl`} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm" style={{ paddingTop: "max(1rem, env(safe-area-inset-top))", paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }} onClick={onClose}>
+      <div className={`my-4 w-full ${width} rounded-2xl bg-white shadow-2xl sm:my-8`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h3 className="text-base font-bold text-slate-800">{title}</h3>
           <button onClick={onClose} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>

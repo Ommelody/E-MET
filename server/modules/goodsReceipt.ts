@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../supabase";
 import { generateDailyTransactionId } from "../lib/ids";
 import { recordTransaction } from "../lib/transactions";
+import { logAudit } from "../lib/audit";
 
 export const goodsReceiptRouter = Router();
 
@@ -54,6 +55,7 @@ goodsReceiptRouter.post("/", async (req, res) => {
     }
 
     if (hadError) return res.json({ success: false, message: "บางรายการล้มเหลว", details: results });
+    logAudit({ actor: info.receivedByUsername, action: "GOODS_RECEIPT", entityType: "inventory", entityId: info.referenceNo || "", detail: `รับวัสดุเข้าคลัง ${results.filter((r: any) => r.success).length} รายการ (อ้างอิง ${info.referenceNo || "-"})` });
     res.json({ success: true, message: "รับวัสดุเข้าคลังสำเร็จ", details: results });
   } catch (e: any) {
     res.status(500).json({ error: e.message });

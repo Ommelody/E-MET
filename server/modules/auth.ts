@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../supabase.js";
 import { hashPassword, verifyPassword, needsUpgrade } from "../lib/password.js";
+import { logAudit } from "../lib/audit.js";
 
 /**
  * โมดูล Auth — คงพฤติกรรม/ข้อมูลผู้ใช้เดิมทั้งหมดไว้
@@ -44,6 +45,7 @@ authRouter.post("/login", async (req, res) => {
     db.from("users").update({ password: newHash }).eq("username", user.username).then(() => {});
   }
 
+  logAudit({ actor: user.username, actorName: user.name, actorRole: user.role, action: "LOGIN", detail: "เข้าสู่ระบบ" });
   return res.json({
     username: user.username,
     name: user.name,
@@ -51,6 +53,8 @@ authRouter.post("/login", async (req, res) => {
     role: user.role,
   });
 });
+
+// (login audit)
 
 // ── ลงทะเบียนผู้ใช้ใหม่ ────────────────────────────────────────
 authRouter.post("/register", async (req, res) => {

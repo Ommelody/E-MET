@@ -141,7 +141,7 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
       </div>
 
       {/* FORM SIDE */}
-      <div className="flex min-h-screen flex-col px-8 py-10" style={{ background: "#f6f7fb" }}>
+      <div className="flex min-h-screen flex-col px-8 py-10" style={{ background: "#f6f7fb", paddingTop: "max(2.5rem, env(safe-area-inset-top))", paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))" }}>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-[400px]">
             <div className="mb-6 text-center">

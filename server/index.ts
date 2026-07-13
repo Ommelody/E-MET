@@ -11,6 +11,8 @@ import { adminRouter } from "./modules/admin";
 import { documentsRouter } from "./modules/documents";
 import { announcementsRouter } from "./modules/announcements";
 import { movementRouter } from "./modules/movement";
+import { purchasingRouter } from "./modules/purchasing";
+import { auditRouter } from "./modules/audit";
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -27,6 +29,8 @@ app.use("/api/admin", adminRouter);
 app.use("/api/documents", documentsRouter);
 app.use("/api/announcements", announcementsRouter);
 app.use("/api/movement", movementRouter);
+app.use("/api/purchasing", purchasingRouter);
+app.use("/api/audit", auditRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

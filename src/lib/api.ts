@@ -81,6 +81,16 @@ export const movementApi = {
   search: (query: string) => request<any>(`/movement${qs({ query })}`),
 };
 
+export const purchasingApi = {
+  reorder: (filters: any) => request<any>(`/purchasing/reorder${qs(filters)}`),
+  saveSettings: (id: string, body: any) => request<any>(`/purchasing/settings/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+};
+
+export const auditApi = {
+  log: (entry: any) => request<any>("/audit", { method: "POST", body: JSON.stringify(entry) }),
+  list: (actor: User, filters: any) => request<any[]>(`/audit${qs({ ...filters, actorRole: actor.role })}`),
+};
+
 export const announcementsApi = {
   get: () => request<any>("/announcements"),
   update: (actor: User, value: any) =>

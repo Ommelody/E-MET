@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../supabase";
+import { logAudit } from "../lib/audit";
 import { generateRequisitionId, generateGoodsIssueId } from "../lib/ids";
 import { applyInventoryDeltas } from "./inventory";
 import { mapRequisitionRow, mapItemRow, docViewUrl } from "../lib/mappers";
@@ -372,7 +373,9 @@ async function manuallyComplete(reqId: string, user: any) {
 requisitionsRouter.post("/", async (req, res) => {
   try {
     const { requisition, items } = req.body ?? {};
-    res.json(await createRequisition(requisition, items || []));
+    const result = await createRequisition(requisition, items || []);
+    logAudit({ actor: requisition?.requestedBy, actorName: requisition?.requestorName, action: "CREATE_REQUISITION", entityType: "requisition", entityId: result.requisitionId, detail: `สร้างใบเบิก ${(items || []).length} รายการ` });
+    res.json(result);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
@@ -438,7 +441,9 @@ requisitionsRouter.post("/batch/list", async (req, res) => {
 requisitionsRouter.post("/batch/approve", async (req, res) => {
   try {
     const b = req.body ?? {};
-    res.json(await processBatchApproval(b.requisitionIds, b.approverUsername, b.approvalLevel, b.approvalDecision, b.notes, b.customDraftItems));
+    const result = await processBatchApproval(b.requisitionIds, b.approverUsername, b.approvalLevel, b.approvalDecision, b.notes, b.customDraftItems);
+    logAudit({ actor: b.approverUsername, actorRole: b.approvalLevel === "manager" ? "Manager" : "Staff", action: b.approvalDecision === "Approved" ? "APPROVE_BATCH" : "REJECT_BATCH", entityType: "requisition", detail: `${b.approvalDecision === "Approved" ? "อนุมัติ/จ่าย" : "ปฏิเสธ"}เป็นชุด ${(b.requisitionIds || []).length} ใบ (ขั้น ${b.approvalLevel})` });
+    res.json(result);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
@@ -460,7 +465,9 @@ requisitionsRouter.get("/:id", async (req, res) => {
 requisitionsRouter.post("/:id/approve", async (req, res) => {
   try {
     const b = req.body ?? {};
-    res.json(await approveRequisition(req.params.id, b.approverUsername, b.approvalLevel, b.approvalDecision, b.notes, b.dispensedItems || []));
+    const result = await approveRequisition(req.params.id, b.approverUsername, b.approvalLevel, b.approvalDecision, b.notes, b.dispensedItems || []);
+    logAudit({ actor: b.approverUsername, action: b.approvalDecision === "Approved" ? "APPROVE" : "REJECT", entityType: "requisition", entityId: req.params.id, detail: `${b.approvalDecision === "Approved" ? "อนุมัติ/จ่าย" : "ปฏิเสธ"}ใบเบิก (ขั้น ${b.approvalLevel})` });
+    res.json(result);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
