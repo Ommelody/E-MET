@@ -1,11 +1,11 @@
-// โหลดไลบรารีสร้าง QR (qrcode UMD) จาก CDN แบบครั้งเดียว
+// โหลดไลบรารีสร้าง QR (qrcode-generator — pure JS ไม่พึ่ง canvas) จาก CDN ครั้งเดียว
 let qrPromise: Promise<void> | null = null;
 export function loadQRLib(): Promise<void> {
   if (qrPromise) return qrPromise;
   qrPromise = new Promise((resolve, reject) => {
-    if ((window as any).QRCode?.toDataURL) return resolve();
+    if ((window as any).qrcode) return resolve();
     const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js";
+    s.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
     s.async = true;
     s.onload = () => resolve();
     s.onerror = () => reject(new Error("โหลดไลบรารี QR ไม่สำเร็จ"));
@@ -16,7 +16,13 @@ export function loadQRLib(): Promise<void> {
 
 export async function qrDataUrl(text: string, size = 220): Promise<string> {
   await loadQRLib();
-  return (window as any).QRCode.toDataURL(text, { margin: 1, width: size, errorCorrectionLevel: "M" });
+  const qrcode = (window as any).qrcode;
+  const qr = qrcode(0, "M");
+  qr.addData(text || "-");
+  qr.make();
+  const count = qr.getModuleCount();
+  const cell = Math.max(2, Math.floor(size / (count + 2)));
+  return qr.createDataURL(cell, cell); // data:image/gif;base64,...
 }
 
 // โหลด html5-qrcode สำหรับสแกน (ทำงานบน iOS Safari ได้)
