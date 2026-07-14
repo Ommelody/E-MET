@@ -39,10 +39,19 @@ export function loadScannerLib(): Promise<void> {
 export async function printLocationLabel(item: {
   code: string; name: string; unit: string; location: string;
 }) {
-  const dataUrl = await qrDataUrl(item.code || item.name, 240);
+  // เปิดหน้าต่างทันทีใน user gesture (กันเบราว์เซอร์บล็อกป๊อปอัปหลัง await)
   const w = window.open("", "_blank", "width=520,height=340");
-  if (!w) { alert("กรุณาอนุญาตป๊อปอัปเพื่อพิมพ์ป้าย"); return; }
+  if (!w) { alert("กรุณาอนุญาตป๊อปอัป (popup) เพื่อพิมพ์ป้าย"); return; }
+  w.document.write('<!doctype html><meta charset="utf-8"><body style="font-family:sans-serif;padding:20px">กำลังสร้างป้าย…</body>');
+  let dataUrl = "";
+  try {
+    dataUrl = await qrDataUrl(item.code || item.name, 240);
+  } catch {
+    w.document.body.innerHTML = "สร้าง QR ไม่สำเร็จ (ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต)";
+    return;
+  }
   const esc = (s: string) => (s || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  w.document.open();
   w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8">
   <title>ป้าย ${esc(item.code)}</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
