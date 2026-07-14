@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือการใช้งานระบบ THAMC e-Material</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  doc-page:not(:defined){visibility:hidden}
+  *{box-sizing:border-box}
+  doc-page{font-family:'Sarabun',sans-serif;font-size:14px;line-height:1.7;color:#1a1a1a}
+  .cover{text-align:center;padding:60px 0 30px}
+  .cover .logo{width:64px;height:64px;border-radius:16px;background:#5b4df6;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .cover h1{font-size:26px;font-weight:700;margin:0 0 6px}
+  .cover .sub{font-size:15px;color:#64748b}
+  .cover .ver{margin-top:20px;font-size:13px;color:#94a3b8}
+  h2{font-size:18px;font-weight:700;color:#0f172a;margin:26px 0 8px;padding-bottom:5px;border-bottom:2px solid #5b4df6}
+  h3{font-size:15px;font-weight:700;color:#1e293b;margin:16px 0 5px}
+  p{margin:0 0 8px;text-align:justify}
+  ul,ol{margin:0 0 10px;padding-left:1.5em}
+  li{margin-bottom:3px}
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13px}
+  th,td{border:1px solid #cbd5e1;padding:6px 9px;vertical-align:top;text-align:left}
+  th{background:#eef2ff;font-weight:700;color:#3730a3}
+  .role-badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;margin-right:4px}
+  .r-admin{background:#ede9fe;color:#6d28d9}
+  .r-manager{background:#dbeafe;color:#1d4ed8}
+  .r-staff{background:#dcfce7;color:#15803d}
+  .r-user{background:#f1f5f9;color:#475569}
+  .box{border:1px solid #cbd5e1;border-left:4px solid #5b4df6;background:#f8fafc;padding:10px 14px;margin:10px 0;border-radius:4px}
+  .tip{border-left-color:#16a34a;background:#f0fdf4}
+  .warn{border-left-color:#f59e0b;background:#fffbeb}
+  .step{counter-reset:s;list-style:none;padding-left:0}
+  .step>li{position:relative;padding-left:32px;margin-bottom:7px}
+  .step>li:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:22px;height:22px;background:#5b4df6;color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .toc a{color:#1e293b;text-decoration:none}
+  .toc li{margin-bottom:4px}
+  .doc-foot{font-size:11px;color:#94a3b8;text-align:center;border-top:1px solid #cbd5e1;padding-top:5px}
+  .pagebreak{break-before:page}
+</style>
+</head>
+<body>
+<doc-page size="a4" margin="0.8in">
+
+  <!-- ปก -->
+  <div class="cover">
+    <div class="logo">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+    </div>
+    <h1>คู่มือการใช้งานระบบ THAMC e-Material</h1>
+    <div class="sub">ระบบบริหารจัดการการเบิกจ่ายวัสดุและพัสดุคงคลัง</div>
+    <div class="ver">ฉบับผู้ใช้งาน · ปรับปรุงล่าสุด กรกฎาคม 2568</div>
+  </div>
+
+  <h2>บทที่ ๑ · ภาพรวมระบบและสิทธิ์การใช้งาน</h2>
+  <p>ระบบ THAMC e-Material เป็นระบบบริหารการเบิกจ่ายวัสดุแบบครบวงจร ทำงานผ่านเว็บเบราว์เซอร์ทั้งบนคอมพิวเตอร์และมือถือ ผู้ใช้แต่ละคนจะเห็นเมนูและทำงานได้ตามสิทธิ์ (Role) ที่ได้รับ</p>
+
+  <h3>ระดับสิทธิ์การใช้งาน (Role)</h3>
+  <table>
+    <tr><th style="width:22%">สิทธิ์</th><th>ขอบเขตการใช้งาน</th></tr>
+    <tr><td><span class="role-badge r-user">User</span> ผู้ใช้ทั่วไป</td><td>สร้างใบเบิก ดูประวัติใบเบิกของตนเอง ดูประกาศ และแก้ไขโปรไฟล์ตนเอง</td></tr>
+    <tr><td><span class="role-badge r-staff">Staff</span> เจ้าหน้าที่พัสดุ</td><td>สิทธิ์ของ User + จัดการคลังพัสดุ จ่ายพัสดุ (Stock) รับเข้าคลัง ตรวจการเคลื่อนไหว รายงาน จุดสั่งซื้อ Good Issue SAP</td></tr>
+    <tr><td><span class="role-badge r-manager">Manager</span> ผู้จัดการ</td><td>สิทธิ์ของ Staff + อนุมัติใบเบิกขั้นหัวหน้างาน + บังคับปิดงาน</td></tr>
+    <tr><td><span class="role-badge r-admin">Admin</span> ผู้ดูแลระบบ</td><td>สิทธิ์ทั้งหมด + จัดการผู้ใช้/แผนก + แก้ไขประกาศ + ดูบันทึกการใช้งาน (Audit Log)</td></tr>
+  </table>
+
+  <div class="box">
+    <b>การเข้าสู่ระบบ:</b> เปิดเว็บระบบ → กรอกชื่อผู้ใช้และรหัสผ่าน → กด "เข้าสู่ระบบ"
+    ผู้ใช้ใหม่กดแท็บ "ลงทะเบียน" เพื่อสร้างบัญชี (ผู้ดูแลระบบจะกำหนดสิทธิ์ให้ภายหลัง)
+  </div>
+  <div class="box tip">
+    <b>ใช้งานบนมือถือ:</b> เพิ่มระบบไว้ที่หน้าจอโฮมได้ (Add to Home Screen) เพื่อเปิดใช้เหมือนแอป — เมนูหลักอยู่แถบด้านล่างจอ ปุ่ม "เพิ่มเติม" เปิดเมนูทั้งหมด
+  </div>
+
+  <h2 class="pagebreak">บทที่ ๒ · คู่มือรายเมนู</h2>
+
+  <h3>๒.๑ ประกาศข่าวสาร <span class="role-badge r-user">ทุกสิทธิ์</span></h3>
+  <p>หน้าแรกหลังเข้าสู่ระบบ แสดงข่าวสาร รอบการเบิกจ่าย และเบอร์ติดต่อ</p>
+  <ul>
+    <li><b>ผู้ใช้ทั่วไป:</b> อ่านประกาศ</li>
+    <li><span class="role-badge r-admin">Admin</span> กด "แก้ไขประกาศ" เพื่อเพิ่ม/ลบการ์ด แก้หัวข้อ เนื้อหา สี และข้อมูลติดต่อ แล้วกด "บันทึก"</li>
+  </ul>
+
+  <h3>๒.๒ แดชบอร์ด <span class="role-badge r-user">ทุกสิทธิ์</span></h3>
+  <p>สรุปภาพรวม: จำนวนวัสดุ มูลค่าคงคลัง วัสดุใกล้หมด จำนวนใบเบิกแยกตามสถานะ ใบเบิกล่าสุด และรายการวัสดุใกล้หมด (เฉพาะเจ้าหน้าที่ขึ้นไปจะเห็นข้อมูลคลัง)</p>
+
+  <h3>๒.๓ สร้างใบเบิก <span class="role-badge r-user">ทุกสิทธิ์</span></h3>
+  <ol class="step">
+    <li>ระบุวันที่เบิกและวัตถุประสงค์</li>
+    <li>กด "เพิ่มรายการ" ค้นหาวัสดุ (คลิกรูปเพื่อดูภาพใหญ่ได้)</li>
+    <li>ระบุจำนวนที่ต้องการ (ระบบจำกัดไม่เกินจำนวนเบิกสูงสุดต่อครั้งถ้ามีตั้งไว้)</li>
+    <li>ตรวจสอบมูลค่ารวม แล้วกด "ส่งใบเบิก"</li>
+    <li>ระบบแจ้งเลขที่เอกสาร — ใบเบิกจะเข้าสู่ขั้นตอนอนุมัติ</li>
+  </ol>
+
+  <h3>๒.๔ ประวัติใบเบิก <span class="role-badge r-user">ทุกสิทธิ์</span></h3>
+  <p>User เห็นเฉพาะใบเบิกของตนเอง / เจ้าหน้าที่ขึ้นไปเห็นทั้งหมด สามารถค้นหาได้จากทุกข้อมูล (เลขที่/ผู้เบิก/แผนก) กรองตามสถานะ หน่วยงาน และช่วงวันที่</p>
+  <ul>
+    <li>กด "ดู" เพื่อดูรายละเอียดแบบไทม์ไลน์ (ยื่นขอ → อนุมัติ → จ่าย → สิ้นสุด)</li>
+    <li>เปิด/พิมพ์เอกสารใบเบิกและใบจ่ายได้ (ไอคอนเอกสารและไอคอนพิมพ์)</li>
+  </ul>
+
+  <h3>๒.๕ อนุมัติใบเบิก <span class="role-badge r-manager">Manager</span> <span class="role-badge r-staff">Staff</span> <span class="role-badge r-admin">Admin</span></h3>
+  <p>ทำงานแบบชุด (Batch) — กรองช่วงวันที่ เลือกขอบเขตสิทธิ์ (ขั้นหัวหน้างาน / ขั้นจ่ายพัสดุ)</p>
+  <ol class="step">
+    <li>เลือกช่วงวันที่ แล้วกด "ประมวลผลค้นหาเป้าหมาย"</li>
+    <li>คลิกบรรทัดใบเบิกเพื่อแตกรายการดูและปรับยอด (อนุมัติ/จ่ายจริง) รายรายการ</li>
+    <li>ติ๊ก "ค้างจ่าย" หากยังไม่จ่ายรายการนั้น (จ่ายน้อยกว่าเบิกได้ ไม่บังคับค้างจ่าย)</li>
+    <li>เลือกใบเบิก (ติ๊กหน้าแถว) ได้หลายใบพร้อมกัน</li>
+    <li>ใส่หมายเหตุ แล้วกด "อนุมัติ" / "ยืนยันการจ่าย" หรือ "ปฏิเสธ"</li>
+  </ol>
+  <div class="box"><b>บังคับปิดงาน</b> <span class="role-badge r-manager">Manager</span><span class="role-badge r-admin">Admin</span> — ใบเบิกที่จ่ายบางส่วน สามารถสั่งปิดงานเป็น "เสร็จสิ้น" ได้ (รายการค้างจ่ายที่เหลือถูกยกเลิก)</div>
+
+  <h3>๒.๖ คลังพัสดุ <span class="role-badge r-user">ดู: ทุกสิทธิ์</span> <span class="role-badge r-staff">แก้ไข: Staff+</span></h3>
+  <ul>
+    <li>ค้นหา/กรองตามหมวดหมู่ คลิกรูปเพื่อดูภาพใหญ่</li>
+    <li>เจ้าหน้าที่ขึ้นไป: เพิ่ม/แก้ไขวัสดุ กำหนดจุดสั่งซื้อขั้นต่ำ จำนวนเบิกสูงสุดต่อครั้ง และอัปโหลดรูป</li>
+    <li>เฉพาะ <span class="role-badge r-admin">Admin</span> ลบวัสดุได้</li>
+  </ul>
+
+  <h3>๒.๗ รับวัสดุเข้าคลัง <span class="role-badge r-staff">Staff+</span></h3>
+  <p>บันทึกการรับพัสดุเข้าสต๊อก — ทำได้ 2 วิธี: กรอกด้วยตนเอง หรือ นำเข้าไฟล์ Excel (มีปุ่มโหลด Template) ระบบปรับปริมาณคงคลังและราคาต่อหน่วยให้อัตโนมัติ</p>
+
+  <h3>๒.๘ การเคลื่อนไหวพัสดุ <span class="role-badge r-staff">Staff+</span></h3>
+  <p>ค้นด้วยชื่อ/รหัสพัสดุ แสดงประวัติว่ารับเข้าเมื่อไร จ่ายออกไปหน่วยงานใด วันที่เท่าไร พร้อมยอดคงเหลือหลังทำรายการ และหมายเหตุ</p>
+
+  <h3>๒.๙ จุดสั่งซื้ออัตโนมัติ <span class="role-badge r-staff">Staff+</span></h3>
+  <p>คำนวณจุดสั่งซื้อจากอัตราการใช้จริง แจ้งเตือนรายการที่ต้องสั่ง และออกใบขอซื้อเป็น Excel</p>
+  <ul>
+    <li>ปรับพารามิเตอร์ (ช่วงย้อนหลัง, Lead time, วันสำรอง, รอบสั่งซื้อ) แล้วกด "คำนวณใหม่"</li>
+    <li>ตั้งค่ารายวัสดุเฉพาะตัวได้ที่ไอคอนเฟือง</li>
+    <li>กด "คู่มือ & สูตร" ในหน้าจอเพื่อดูสูตรและตัวอย่างการคำนวณ</li>
+  </ul>
+
+  <h3>๒.๑๐ รายงาน <span class="role-badge r-staff">Staff+</span></h3>
+  <p>ด้านบนมี "รายงานด่วน" (การเคลื่อนไหวล่าสุด วัสดุ/หน่วยงานเบิกบ่อย พร้อมจำนวนและมูลค่า) ด้านล่างเลือกรายงานได้ ๗ ประเภท พร้อมตัวกรองช่วงเวลา/หน่วยงาน/หมวดหมู่ และส่งออก Excel</p>
+
+  <h3>๒.๑๑ Good Issue SAP <span class="role-badge r-staff">Staff+</span></h3>
+  <p>สรุปเฉพาะรายการที่มีการจ่ายออก เลือกตามหมวดวัสดุ เพื่อนำข้อมูลไปลงระบบ SAP (คลังฟิกซ์ 17OSS, Business Type = รหัสหน่วยงาน 2 ตัวหน้า, Department = รหัส 5 หลักหน้า)</p>
+
+  <h3>๒.๑๒ ผู้ดูแลระบบ <span class="role-badge r-admin">Admin</span></h3>
+  <ul>
+    <li><b>จัดการผู้ใช้:</b> แก้ไขชื่อ/แผนก/สิทธิ์ รีเซ็ตรหัสผ่าน ลบผู้ใช้</li>
+    <li><b>จัดการแผนก:</b> เพิ่ม/ลบหน่วยงาน</li>
+  </ul>
+
+  <h3>๒.๑๓ บันทึกการใช้งาน (Audit Log) <span class="role-badge r-admin">Admin</span></h3>
+  <p>ตรวจสอบว่าใครทำอะไรเมื่อไหร่ (เข้าสู่ระบบ สร้างใบเบิก อนุมัติ/จ่าย รับเข้าคลัง) กรองตามประเภท ผู้ใช้ และช่วงวันที่</p>
+
+  <h3>๒.๑๔ โปรไฟล์ของฉัน <span class="role-badge r-user">ทุกสิทธิ์</span></h3>
+  <p>แก้ไขชื่อ-นามสกุล แผนก และเปลี่ยนรหัสผ่านของตนเอง</p>
+
+  <h2 class="pagebreak">บทที่ ๓ · ขั้นตอนการทำงานหลัก (Workflow)</h2>
+  <p>ลำดับสถานะใบเบิกตั้งแต่ต้นจนจบ:</p>
+  <table>
+    <tr><th>ลำดับ</th><th>สถานะ</th><th>ผู้ดำเนินการ</th></tr>
+    <tr><td>1</td><td>รออนุมัติ (หัวหน้างาน)</td><td>ผู้ใช้สร้างใบเบิก → รอ Manager/Admin</td></tr>
+    <tr><td>2</td><td>รอจ่ายพัสดุ</td><td>หัวหน้างานอนุมัติ → รอเจ้าหน้าที่พัสดุ</td></tr>
+    <tr><td>3</td><td>เสร็จสิ้น / จ่ายบางส่วน</td><td>เจ้าหน้าที่พัสดุจ่ายของ (ตัดสต๊อก + ออกใบจ่าย)</td></tr>
+    <tr><td>—</td><td>ปฏิเสธ (หัวหน้างาน/พัสดุ)</td><td>กรณีไม่อนุมัติในขั้นใดขั้นหนึ่ง</td></tr>
+  </table>
+  <div class="box warn"><b>หมายเหตุ:</b> เอกสารใบเบิก/ใบจ่ายเปิดดูได้ทั้งบนคอมพิวเตอร์และมือถือ มีปุ่ม "พิมพ์ / บันทึก PDF" และปุ่ม "ปิดเอกสาร" ในตัว</div>
+
+  <div slot="footer" class="doc-foot">คู่มือการใช้งานระบบ THAMC e-Material — ระบบบริหารการเบิกจ่ายวัสดุและพัสดุคงคลัง</div>
+
+</doc-page>
+<script src="doc-page.js"></script>
+</body>
+</html>

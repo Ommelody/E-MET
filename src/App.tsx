@@ -61,7 +61,7 @@ export default function App() {
     [user]
   );
 
-  if (!user) return <ToastProvider><Login onLogin={(u) => { setAndStore(u); setTab("dashboard"); }} /></ToastProvider>;
+  if (!user) return <ToastProvider><Login onLogin={(u) => { setAndStore(u); setTab("announcements"); }} /></ToastProvider>;
 
   const go = (t: TabId) => { setTab(t); setMobileOpen(false); };
 
@@ -104,7 +104,7 @@ export default function App() {
             <div className="truncate text-[10px] text-slate-400">{user.role} · {user.department}</div>
           </div>
         </button>
-        <button onClick={() => { setAndStore(null); setTab("dashboard"); }} className="mt-1 flex w-full cursor-pointer items-center gap-3 rounded-xl border-none bg-transparent px-3.5 py-2.5 text-left text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-300">
+        <button onClick={() => { setAndStore(null); setTab("announcements"); }} className="mt-1 flex w-full cursor-pointer items-center gap-3 rounded-xl border-none bg-transparent px-3.5 py-2.5 text-left text-sm font-medium text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-300">
           <LogOut className="h-[18px] w-[18px]" />ออกจากระบบ
         </button>
       </div>

@@ -16,6 +16,7 @@ const REPORT_TYPES = [
   { id: "inventoryStock", name: "7. พัสดุในคลังทั้งหมด (Stock balance)", dated: false },
   { id: "stockMovement", name: "8. ความเคลื่อนไหวสต๊อก (Stock Movement)", dated: true },
   { id: "stockOnhand", name: "9. ยอดคงเหลือปัจจุบัน (Stock On-hand)", dated: false },
+  { id: "stockCount", name: "10. ใบนับสต๊อก (Stock Count Sheet)", dated: false },
 ];
 
 // นิยาม header + วิธี map แต่ละ row เป็น array cell ของแต่ละรายงาน
@@ -55,6 +56,10 @@ const SPEC: Record<string, { headers: string[]; map: (r: any) => any[] }> = {
   stockOnhand: {
     headers: ["รหัส", "ชื่อวัสดุ", "หมวดหมู่", "ที่ตั้ง", "คงเหลือ", "หน่วย", "Min Stock", "ราคา/หน่วย", "มูลค่ารวม", "สถานะ"],
     map: (r) => [r.code, r.name, r.category, r.location, `${fmtNumber(r.quantity)}`, r.unit, fmtNumber(r.minQuantity), fmtBaht(r.unitPrice), fmtBaht(r.totalValue), r.status],
+  },
+  stockCount: {
+    headers: ["รหัส", "ชื่อวัสดุ", "ที่ตั้ง", "หน่วย", "คงเหลือ(ระบบ)", "นับจริง", "ผลต่าง"],
+    map: (r: any) => [r.code, r.name, r.location, r.unit, fmtNumber(r.quantity), "", ""],
   },
 };
 
@@ -96,15 +101,43 @@ export default function Reports({ user }: { user: User }) {
     if (!type) return toast.push({ type: "error", msg: "กรุณาเลือกประเภทรายงาน" });
     setLoading(true); setRan(true); setRows([]); setRaw([]);
     try {
-      const filters: any = type === "inventoryStock"
+      const noDate = type === "inventoryStock" || type === "stockOnhand" || type === "stockCount";
+      const filters: any = noDate
         ? { category, location }
         : { department, startDate, endDate, startTime, endTime };
-      const data = await reportsApi.run(type, filters);
+      const endpoint = type === "stockCount" ? "stockOnhand" : type;
+      const data = await reportsApi.run(endpoint, filters);
       setRaw(data || []);
       setRows((data || []).map((r) => SPEC[type].map(r)));
       setPage(1);
     } catch (e: any) { toast.push({ type: "error", msg: e.message }); }
     finally { setLoading(false); }
+  };
+
+  const printStockCount = () => {
+    if (raw.length === 0) return toast.push({ type: "error", msg: "ไม่มีข้อมูล — กดสร้างรายงานก่อน" });
+    const w = window.open("", "_blank");
+    if (!w) { toast.push({ type: "error", msg: "กรุณาอนุญาตป๊อปอัพ" }); return; }
+    const esc = (s: any) => String(s ?? "").replace(/</g, "&lt;");
+    const body = raw.map((r: any, i: number) => `<tr><td class=c>${i + 1}</td><td>${esc(r.code)}</td><td>${esc(r.name)}</td><td class=c>${esc(r.location)}</td><td class=c>${esc(r.unit)}</td><td class=r>${fmtNumber(r.quantity)}</td><td></td><td></td><td></td></tr>`).join("");
+    w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ใบนับสต๊อก</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>@page{size:A4 portrait;margin:1.2cm}*{box-sizing:border-box}body{font-family:'Sarabun',sans-serif;font-size:12px;color:#111;margin:0}
+    h1{text-align:center;font-size:17px;margin:0 0 2px}.sub{text-align:center;font-size:12px;color:#555;margin:0 0 12px}
+    .meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:5px 6px}th{background:#eee;font-size:11px}
+    td.c{text-align:center}td.r{text-align:right}tbody tr{height:26px}
+    .sign{margin-top:26px;display:flex;justify-content:space-around;text-align:center;font-size:12px}
+    .prt{position:fixed;top:8px;right:8px}.prt button{font-family:'Sarabun';padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px}
+    .b1{background:#4f46e5;color:#fff}.b2{background:#e2e8f0;margin-right:6px}@media print{.prt{display:none}}</style></head><body>
+    <div class="prt"><button class="b2" onclick="window.close()">ปิด</button><button class="b1" onclick="window.print()">พิมพ์ / PDF</button></div>
+    <h1>ใบนับสต๊อกพัสดุ (Stock Count Sheet)</h1>
+    <div class="sub">THAMC e-Material — ระบบเบิกจ่ายวัสดุและพัสดุคงคลัง</div>
+    <div class="meta"><span>วันที่นับ: ${new Date().toLocaleDateString("th-TH", { dateStyle: "long" })}</span><span>รวม ${raw.length} รายการ</span></div>
+    <table><thead><tr><th style="width:5%">ลำดับ</th><th style="width:13%">รหัส</th><th>ชื่อวัสดุ</th><th style="width:11%">ที่ตั้ง</th><th style="width:8%">หน่วย</th><th style="width:11%">คงเหลือ(ระบบ)</th><th style="width:11%">นับจริง</th><th style="width:10%">ผลต่าง</th><th style="width:12%">หมายเหตุ</th></tr></thead><tbody>${body}</tbody></table>
+    <div class="sign"><div>ลงชื่อ ...............................<br>ผู้นับ</div><div>ลงชื่อ ...............................<br>ผู้ตรวจสอบ</div></div>
+    <script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script></body></html>`);
+    w.document.close();
   };
 
   const exportExcel = () => {
@@ -243,6 +276,7 @@ export default function Reports({ user }: { user: User }) {
 
         <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4">
           <Button onClick={run} disabled={loading}><Play className="h-4 w-4" />{loading ? "กำลังประมวลผล…" : "สร้างรายงาน"}</Button>
+          {type === "stockCount" && <Button variant="outline" onClick={printStockCount} disabled={rows.length === 0}><FileSpreadsheet className="h-4 w-4" />พิมพ์ PDF (แนวตั้ง)</Button>}
           <Button variant="success" onClick={exportExcel} disabled={rows.length === 0}><FileSpreadsheet className="h-4 w-4" />Export Excel</Button>
         </div>
       </Card>

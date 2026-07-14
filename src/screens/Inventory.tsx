@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, Package, ImageOff } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, ImageOff, QrCode, ScanLine, Tag } from "lucide-react";
 import { inventoryApi } from "../lib/api";
 import { fmtBaht, fmtNumber } from "../lib/format";
 import { Button, Card, Field, inputClass, Modal, Spinner, EmptyState, PageHeader, useToast } from "../ui";
+import { printLocationLabel } from "../lib/qr";
+import QRScanner from "./QRScanner";
 import type { User } from "../types";
 
 const empty = { code: "", name: "", category: "", unit: "", quantity: "0", minQuantity: "0", maxIssueQuantity: "", unitPrice: "0", location: "" };
@@ -20,6 +22,10 @@ export default function Inventory({ user }: { user: User }) {
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<{ base64: string; mime: string; preview: string } | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanned, setScanned] = useState<any | null>(null);
+  const [adjustQty, setAdjustQty] = useState("");
+  const [savingAdjust, setSavingAdjust] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -81,6 +87,33 @@ export default function Inventory({ user }: { user: User }) {
 
   if (loading) return <Spinner label="กำลังโหลดคลังพัสดุ…" />;
 
+  // เมื่อสแกน QR เจอ → หาวัสดุตามรหัส แล้วเปิดรายละเอียด/ปรับสต๊อก
+  const onScanFound = (text: string) => {
+    setScanOpen(false);
+    const key = (text || "").trim().toLowerCase();
+    const found = items.find((i) => (i.code || "").toLowerCase() === key)
+      || items.find((i) => (i.code || "").toLowerCase().includes(key) || (i.name || "").toLowerCase().includes(key));
+    if (found) { setScanned(found); setAdjustQty(String(found.quantity)); }
+    else toast.push({ type: "error", msg: `ไม่พบพัสดุจากรหัส: ${text}` });
+  };
+
+  const saveAdjust = async () => {
+    if (!scanned) return;
+    const q = parseInt(adjustQty);
+    if (isNaN(q) || q < 0) return toast.push({ type: "error", msg: "จำนวนไม่ถูกต้อง" });
+    setSavingAdjust(true);
+    try {
+      await inventoryApi.update(scanned.id, {
+        code: scanned.code, name: scanned.name, category: scanned.category, unit: scanned.unit,
+        quantity: q, minQuantity: scanned.minQuantity,
+        maxIssueQuantity: scanned.maxIssueQuantity ?? "", unitPrice: scanned.unitPrice, location: scanned.location,
+      });
+      toast.push({ type: "success", msg: "ปรับปรุงสต๊อกสำเร็จ" });
+      setScanned(null); load();
+    } catch (e: any) { toast.push({ type: "error", msg: e.message }); }
+    finally { setSavingAdjust(false); }
+  };
+
   return (
     <div>
       <PageHeader title="คลังพัสดุ" subtitle={`ทั้งหมด ${fmtNumber(items.length)} รายการ`}
@@ -92,6 +125,7 @@ export default function Inventory({ user }: { user: User }) {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input className={inputClass + " pl-9"} placeholder="ค้นหาชื่อ / รหัส / ที่ตั้ง" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
+          <Button variant="outline" onClick={() => setScanOpen(true)}><ScanLine className="h-4 w-4" />สแกน QR</Button>
           <select className={inputClass + " max-w-[220px]"} value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">ทุกหมวดหมู่</option>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -144,6 +178,7 @@ export default function Inventory({ user }: { user: User }) {
                       {canEdit && (
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-1">
+                            <button onClick={() => printLocationLabel(it)} title="พิมพ์ป้าย Location (QR)" className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-slate-400 hover:bg-sky-50 hover:text-sky-600"><Tag className="h-4 w-4" /></button>
                             <button onClick={() => openEdit(it)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"><Pencil className="h-4 w-4" /></button>
                             {user.role === "Admin" && <button onClick={() => remove(it)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-slate-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>}
                           </div>
@@ -190,6 +225,41 @@ export default function Inventory({ user }: { user: User }) {
           <img src={lightbox} alt="" className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl" />
         </div>
       )}
+
+      {scanOpen && <QRScanner onFound={onScanFound} onClose={() => setScanOpen(false)} />}
+
+      <Modal open={!!scanned} onClose={() => setScanned(null)} title="ผลการสแกนพัสดุ">
+        {scanned && (
+          <div>
+            <div className="flex items-center gap-3">
+              {scanned.imageUrl ? <img src={scanned.imageUrl} alt="" className="h-16 w-16 rounded-lg object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-100 text-slate-300"><ImageOff className="h-6 w-6" /></div>}
+              <div>
+                <div className="text-base font-bold text-slate-800">{scanned.name}</div>
+                <div className="font-mono text-xs text-slate-400">{scanned.code}</div>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm">
+              <div><div className="text-[11px] text-slate-400">หมวดหมู่</div><div className="text-slate-700">{scanned.category || "-"}</div></div>
+              <div><div className="text-[11px] text-slate-400">ที่ตั้ง</div><div className="text-slate-700">{scanned.location || "-"}</div></div>
+              <div><div className="text-[11px] text-slate-400">คงเหลือปัจจุบัน</div><div className="font-bold text-slate-800">{fmtNumber(scanned.quantity)} {scanned.unit}</div></div>
+              <div><div className="text-[11px] text-slate-400">ราคา/หน่วย</div><div className="text-slate-700">{fmtBaht(scanned.unitPrice)}</div></div>
+            </div>
+            {canEdit ? (
+              <div className="mt-4">
+                <Field label="ปรับปรุงยอดคงเหลือ (นับสต๊อกจริง)">
+                  <input type="number" min={0} className={inputClass} value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} />
+                </Field>
+                <div className="mt-5 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setScanned(null)}>ปิด</Button>
+                  <Button onClick={saveAdjust} disabled={savingAdjust}>{savingAdjust ? "กำลังบันทึก…" : "บันทึกสต๊อก"}</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 flex justify-end"><Button variant="outline" onClick={() => setScanned(null)}>ปิด</Button></div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
