@@ -85,18 +85,74 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           style={{ background: `radial-gradient(circle, ${ACCENT}88, transparent 70%)` }}
         />
 
-        <div className="relative flex flex-1 flex-col items-center justify-center gap-4">
+        <div className="relative flex items-center gap-3">
           <div
-            className="flex h-20 w-20 items-center justify-center rounded-2xl"
-            style={{ background: ACCENT, boxShadow: `0 12px 32px ${ACCENT}73` }}
+            className="flex h-11 w-11 items-center justify-center rounded-xl"
+            style={{ background: ACCENT, boxShadow: `0 8px 24px ${ACCENT}73` }}
           >
-            <Boxes className="h-10 w-10" strokeWidth={2.2} />
+            <Boxes className="h-6 w-6" strokeWidth={2.2} />
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold tracking-tight">THAMC e-Material</div>
-            <div className="mt-1 text-sm tracking-wide" style={{ color: "#a5a1c9" }}>
+          <div>
+            <div className="text-base font-bold tracking-tight">THAMC e-Material</div>
+            <div className="text-[11px] tracking-wide" style={{ color: "#a5a1c9" }}>
               Inventory Management
             </div>
+          </div>
+        </div>
+
+        {/* warehouse illustration */}
+        <svg className="relative mx-auto w-full max-w-md" viewBox="0 0 400 320" fill="none">
+          <ellipse cx="200" cy="300" rx="170" ry="14" fill="#000" opacity="0.25" />
+          {/* shelf frame */}
+          <rect x="30" y="60" width="90" height="200" rx="4" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <line x1="30" y1="120" x2="120" y2="120" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <line x1="30" y1="180" x2="120" y2="180" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <line x1="30" y1="240" x2="120" y2="240" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <rect x="40" y="75" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
+          <rect x="80" y="75" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
+          <rect x="40" y="135" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
+          <rect x="40" y="195" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
+          <rect x="80" y="195" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
+
+          <rect x="280" y="60" width="90" height="200" rx="4" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <line x1="280" y1="120" x2="370" y2="120" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <line x1="280" y1="180" x2="370" y2="180" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <line x1="280" y1="240" x2="370" y2="240" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
+          <rect x="290" y="75" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
+          <rect x="330" y="75" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
+          <rect x="290" y="195" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
+          <rect x="330" y="135" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
+
+          {/* central stacked boxes (isometric) */}
+          <g transform="translate(150,150)">
+            <polygon points="50,10 95,35 50,60 5,35" fill={ACCENT} opacity="0.9" />
+            <polygon points="5,35 50,60 50,110 5,85" fill="#4c3fe0" opacity="0.9" />
+            <polygon points="95,35 50,60 50,110 95,85" fill="#3a2fc0" opacity="0.9" />
+            <line x1="50" y1="10" x2="50" y2="60" stroke="#2c229c" strokeWidth="1.5" opacity="0.6" />
+            <line x1="5" y1="35" x2="50" y2="60" stroke="#2c229c" strokeWidth="1.5" opacity="0.6" />
+          </g>
+          {/* forklift silhouette */}
+          <g transform="translate(190,225)" opacity="0.7">
+            <rect x="0" y="10" width="44" height="22" rx="4" fill="#8b7cf6" />
+            <rect x="34" y="-16" width="6" height="48" fill="#8b7cf6" />
+            <rect x="40" y="-6" width="16" height="4" fill="#8b7cf6" />
+            <rect x="40" y="6" width="16" height="4" fill="#8b7cf6" />
+            <circle cx="10" cy="34" r="7" fill="#4c3fe0" />
+            <circle cx="34" cy="34" r="7" fill="#4c3fe0" />
+          </g>
+          {/* floating check badges */}
+          <circle cx="70" cy="40" r="14" fill="#1c1650" stroke="#8b7cf6" strokeWidth="1.5" />
+          <path d="M64 40l4 4 8-8" stroke="#a5f3c0" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="340" cy="45" r="14" fill="#1c1650" stroke="#8b7cf6" strokeWidth="1.5" />
+          <path d="M334 45l4 4 8-8" stroke="#a5f3c0" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+
+        <div className="relative text-center">
+          <div className="text-lg font-semibold" style={{ color: "#d6d3f0" }}>
+            บริหารจัดการคลังพัสดุอย่างเป็นระบบ
+          </div>
+          <div className="mt-1 text-[13px]" style={{ color: "#8f8ab8" }}>
+            เบิก · อนุมัติ · จ่าย · ตรวจสอบย้อนหลังได้ทุกขั้นตอน
           </div>
         </div>
       </div>
