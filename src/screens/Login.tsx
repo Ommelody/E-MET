@@ -100,60 +100,43 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           </div>
         </div>
 
-        {/* warehouse illustration */}
-        <svg className="relative mx-auto w-full max-w-md" viewBox="0 0 400 320" fill="none">
-          <ellipse cx="200" cy="300" rx="170" ry="14" fill="#000" opacity="0.25" />
-          {/* shelf frame */}
-          <rect x="30" y="60" width="90" height="200" rx="4" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <line x1="30" y1="120" x2="120" y2="120" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <line x1="30" y1="180" x2="120" y2="180" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <line x1="30" y1="240" x2="120" y2="240" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <rect x="40" y="75" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
-          <rect x="80" y="75" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
-          <rect x="40" y="135" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
-          <rect x="40" y="195" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
-          <rect x="80" y="195" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
-
-          <rect x="280" y="60" width="90" height="200" rx="4" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <line x1="280" y1="120" x2="370" y2="120" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <line x1="280" y1="180" x2="370" y2="180" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <line x1="280" y1="240" x2="370" y2="240" stroke="#6f66c9" strokeWidth="2" opacity="0.5" />
-          <rect x="290" y="75" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
-          <rect x="330" y="75" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
-          <rect x="290" y="195" width="26" height="26" rx="3" fill="#8b7cf6" opacity="0.4" />
-          <rect x="330" y="135" width="26" height="26" rx="3" fill={ACCENT} opacity="0.55" />
-
-          {/* central stacked boxes (isometric) */}
-          <g transform="translate(150,150)">
-            <polygon points="50,10 95,35 50,60 5,35" fill={ACCENT} opacity="0.9" />
-            <polygon points="5,35 50,60 50,110 5,85" fill="#4c3fe0" opacity="0.9" />
-            <polygon points="95,35 50,60 50,110 95,85" fill="#3a2fc0" opacity="0.9" />
-            <line x1="50" y1="10" x2="50" y2="60" stroke="#2c229c" strokeWidth="1.5" opacity="0.6" />
-            <line x1="5" y1="35" x2="50" y2="60" stroke="#2c229c" strokeWidth="1.5" opacity="0.6" />
-          </g>
-          {/* forklift silhouette */}
-          <g transform="translate(190,225)" opacity="0.7">
-            <rect x="0" y="10" width="44" height="22" rx="4" fill="#8b7cf6" />
-            <rect x="34" y="-16" width="6" height="48" fill="#8b7cf6" />
-            <rect x="40" y="-6" width="16" height="4" fill="#8b7cf6" />
-            <rect x="40" y="6" width="16" height="4" fill="#8b7cf6" />
-            <circle cx="10" cy="34" r="7" fill="#4c3fe0" />
-            <circle cx="34" cy="34" r="7" fill="#4c3fe0" />
-          </g>
-          {/* floating check badges */}
-          <circle cx="70" cy="40" r="14" fill="#1c1650" stroke="#8b7cf6" strokeWidth="1.5" />
-          <path d="M64 40l4 4 8-8" stroke="#a5f3c0" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="340" cy="45" r="14" fill="#1c1650" stroke="#8b7cf6" strokeWidth="1.5" />
-          <path d="M334 45l4 4 8-8" stroke="#a5f3c0" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-
-        <div className="relative text-center">
-          <div className="text-lg font-semibold" style={{ color: "#d6d3f0" }}>
-            บริหารจัดการคลังพัสดุอย่างเป็นระบบ
+        <div className="relative">
+          <div
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11.5px] font-medium backdrop-blur"
+            style={{ color: "#d6d3f0" }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_0_3px_rgba(74,222,128,.25)]" />
+            ระบบเบิกจ่ายพัสดุศูนย์การแพทย์
           </div>
-          <div className="mt-1 text-[13px]" style={{ color: "#8f8ab8" }}>
-            เบิก · อนุมัติ · จ่าย · ตรวจสอบย้อนหลังได้ทุกขั้นตอน
-          </div>
+          <h1 className="m-0 mb-4 text-[38px] font-bold leading-[1.2] tracking-tight">
+            จัดการคลังพัสดุ
+            <br />
+            อย่างเป็นระบบ
+            <br />
+            <span style={{ color: "#b3aef7" }}>ตั้งแต่เบิกจนจ่าย</span>
+          </h1>
+          <p className="m-0 max-w-[380px] text-[14.5px] leading-[1.7]" style={{ color: "#b3afd6" }}>
+            เบิก–อนุมัติ–จ่ายของ ติดตามสถานะแบบเรียลไทม์ พร้อมรายงานและเอกสารครบวงจร
+            สำหรับฝ่ายการเงินและบัญชี
+          </p>
+        </div>
+
+        <div className="relative flex gap-7">
+          {[
+            ["3", "ระดับอนุมัติ"],
+            ["9", "โมดูลใช้งาน"],
+            ["100%", "ตรวจสอบย้อนหลัง"],
+          ].map(([n, l], i) => (
+            <div key={i} className="flex items-center gap-7">
+              {i > 0 && <div className="h-8 w-px bg-white/15" />}
+              <div>
+                <div className="text-2xl font-bold">{n}</div>
+                <div className="text-[11.5px]" style={{ color: "#a5a1c9" }}>
+                  {l}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
