@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เอกสารนำเสนอระบบ THAMC e-Material — เพื่อพิจารณาอนุมัติงบประมาณ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  doc-page:not(:defined){visibility:hidden}
+  *{box-sizing:border-box}
+  doc-page{font-family:'Sarabun',sans-serif;font-size:14.5px;line-height:1.7;color:#1a1a1a;text-align:justify}
+  .cover{text-align:center;padding:40px 0 24px;border-bottom:3px solid #4f46e5;margin-bottom:24px}
+  .cover .logo{width:64px;height:64px;border-radius:16px;background:#4f46e5;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .cover h1{font-size:24px;font-weight:700;margin:0 0 6px;color:#1e1b4b}
+  .cover .en{font-size:14px;color:#64748b;margin:0 0 14px}
+  .cover .purpose{display:inline-block;background:#eef2ff;color:#4338ca;font-weight:600;font-size:13px;padding:7px 18px;border-radius:999px}
+  h2{font-size:17px;font-weight:700;margin:24px 0 10px;color:#1e1b4b;padding-bottom:5px;border-bottom:2px solid #e2e8f0}
+  h3{font-size:14.5px;font-weight:700;margin:14px 0 5px;color:#4338ca}
+  p{margin:0 0 9px}
+  ul{margin:0 0 10px;padding-left:1.4em}
+  li{margin-bottom:5px}
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13px}
+  th,td{border:1px solid #cbd5e1;padding:7px 10px;vertical-align:top;text-align:left}
+  th{background:#eef2ff;font-weight:700;color:#3730a3}
+  td.c{text-align:center}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 14px}
+  .feat{border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;background:#fafafd}
+  .feat .t{font-weight:700;color:#1e1b4b;margin-bottom:3px;font-size:13.5px}
+  .feat .d{font-size:12.5px;color:#475569;line-height:1.55}
+  .arch{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:10px 0 14px}
+  .layer{display:flex;align-items:center;gap:12px;padding:10px 0}
+  .layer:not(:last-child){border-bottom:1px dashed #cbd5e1}
+  .layer .tag{flex:none;width:120px;font-weight:700;font-size:12.5px;color:#4338ca;text-align:center;background:#eef2ff;border-radius:8px;padding:8px 4px}
+  .layer .body{font-size:12.5px;color:#334155}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;margin:8px 0}
+  .flow .step{background:#eef2ff;color:#3730a3;font-weight:600;padding:6px 11px;border-radius:8px}
+  .flow .arr{color:#94a3b8;font-weight:700}
+  .highlight{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin:10px 0}
+  .cost-note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:13px;color:#92400e;margin:10px 0}
+  .doc-foot{font-size:11px;color:#64748b;text-align:center;border-top:1px solid #cbd5e1;padding-top:6px}
+  .muted{color:#64748b;font-size:12.5px}
+</style>
+</head>
+<body>
+<doc-page size="a4" margin="0.85in">
+
+  <div class="cover">
+    <div class="logo"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg></div>
+    <h1>ระบบบริหารจัดการการเบิกจ่ายวัสดุและพัสดุคงคลัง</h1>
+    <p class="en">THAMC e-Material — Inventory & Requisition Management System</p>
+    <span class="purpose">เอกสารประกอบการพิจารณาอนุมัติงบประมาณ</span>
+  </div>
+
+  <h2>๑. บทสรุปสำหรับผู้บริหาร</h2>
+  <p>ระบบ THAMC e-Material เป็นระบบสารสนเทศบริหารจัดการการเบิกจ่ายวัสดุและพัสดุคงคลังแบบครบวงจรผ่านเว็บเบราว์เซอร์ ทดแทนการทำงานด้วยเอกสารและการบันทึกด้วยมือ ครอบคลุมกระบวนการตั้งแต่การร้องขอเบิก การอนุมัติตามลำดับชั้น การจ่ายพัสดุ การรับพัสดุเข้าคลัง การคำนวณจุดสั่งซื้ออัตโนมัติ ตลอดจนการจัดทำรายงานและการตรวจสอบย้อนหลัง โดยรองรับการใช้งานทั้งบนคอมพิวเตอร์และโทรศัพท์มือถือ</p>
+  <div class="highlight">
+    <b>ประโยชน์ที่คาดว่าจะได้รับ:</b> ลดความคลาดเคลื่อนของข้อมูลคงคลัง · ลดเวลาและกระดาษในกระบวนการเบิกจ่าย · เพิ่มความโปร่งใสด้วยการอนุมัติตามลำดับชั้นและบันทึกการใช้งาน · ควบคุมงบจัดซื้อด้วยระบบคำนวณจุดสั่งซื้ออัตโนมัติ
+  </div>
+
+  <h2>๒. ขอบเขตความสามารถของระบบ (Functional Overview)</h2>
+  <div class="grid">
+    <div class="feat"><div class="t">จัดการคลังพัสดุ</div><div class="d">บันทึก/แก้ไข/ค้นหาวัสดุ พร้อมรูปภาพ กำหนดจุดสั่งซื้อขั้นต่ำและจำนวนเบิกสูงสุด แจ้งเตือนของใกล้หมด</div></div>
+    <div class="feat"><div class="t">เบิก–อนุมัติ–จ่าย</div><div class="d">สร้างใบเบิก อนุมัติตามลำดับชั้น (หัวหน้างาน → พัสดุ) ปรับยอดอนุมัติ/จ่ายจริง รองรับจ่ายบางส่วนและของค้างจ่าย</div></div>
+    <div class="feat"><div class="t">อนุมัติแบบชุด (Batch)</div><div class="d">กรองช่วงวันที่ เลือกหลายใบพร้อมกัน แตกรายการปรับยอดในตัว ลดเวลาการทำงานของผู้อนุมัติ</div></div>
+    <div class="feat"><div class="t">รับพัสดุเข้าคลัง</div><div class="d">บันทึกด้วยตนเองหรือนำเข้าจากไฟล์ Excel ปรับปรุงคงคลังและราคาต่อหน่วยอัตโนมัติ</div></div>
+    <div class="feat"><div class="t">จุดสั่งซื้ออัตโนมัติ</div><div class="d">คำนวณจากอัตราการใช้จริง แนะนำปริมาณและมูลค่าที่ควรสั่ง ออกใบขอซื้อเป็น Excel</div></div>
+    <div class="feat"><div class="t">ตรวจสอบการเคลื่อนไหว</div><div class="d">ค้นหาพัสดุแล้วดูประวัติรับเข้า/จ่ายออกทั้งหมด พร้อมวันที่และปลายทาง</div></div>
+    <div class="feat"><div class="t">รายงาน & เอกสาร</div><div class="d">รายงาน ๑๐ ประเภท กรองตามช่วงเวลา/หน่วยงาน/หมวดหมู่ ส่งออก Excel และพิมพ์เอกสาร/ใบนับสต๊อกเป็น PDF</div></div>
+    <div class="feat"><div class="t">QR & โมบาย</div><div class="d">พิมพ์ป้าย Location พร้อม QR สแกนด้วยมือถือเพื่อดู/ปรับปรุงสต๊อก รองรับการติดตั้งเป็นแอปบนหน้าจอมือถือ</div></div>
+    <div class="feat"><div class="t">ผู้ใช้ & สิทธิ์</div><div class="d">กำหนดสิทธิ์ ๔ ระดับ (Admin/Manager/Staff/User) จัดการผู้ใช้และหน่วยงาน</div></div>
+    <div class="feat"><div class="t">บันทึกการใช้งาน (Audit)</div><div class="d">เก็บประวัติการกระทำสำคัญ ใครทำอะไรเมื่อไหร่ เพื่อความโปร่งใสและตรวจสอบย้อนหลัง</div></div>
+  </div>
+
+  <h2>๓. กระบวนการทำงานหลัก (Workflow)</h2>
+  <div class="flow">
+    <span class="step">ผู้ใช้สร้างใบเบิก</span><span class="arr">→</span>
+    <span class="step">หัวหน้างานอนุมัติ</span><span class="arr">→</span>
+    <span class="step">เจ้าหน้าที่พัสดุจ่ายของ</span><span class="arr">→</span>
+    <span class="step">ตัดสต๊อก + ออกใบจ่าย</span><span class="arr">→</span>
+    <span class="step">เสร็จสิ้น / ตรวจสอบย้อนหลัง</span>
+  </div>
+  <p class="muted">ทุกขั้นตอนบันทึกสถานะและผู้ดำเนินการ พร้อมสร้างเอกสารใบเบิก/ใบจ่ายที่พิมพ์และบันทึกเป็น PDF ได้ และตัดยอดคงคลังโดยอัตโนมัติเมื่อมีการจ่ายจริง</p>
+
+  <h2>๔. สถาปัตยกรรมระบบ (System Architecture)</h2>
+  <div class="arch">
+    <div class="layer"><div class="tag">ผู้ใช้งาน</div><div class="body">คอมพิวเตอร์ / โทรศัพท์มือถือ ผ่านเว็บเบราว์เซอร์ (ไม่ต้องติดตั้งโปรแกรม) เชื่อมต่อแบบเข้ารหัส HTTPS</div></div>
+    <div class="layer"><div class="tag">ส่วนหน้า<br>Frontend</div><div class="body">React + Vite — ส่วนแสดงผลและโต้ตอบผู้ใช้ รองรับการแสดงผลแบบ Responsive ทุกขนาดหน้าจอ</div></div>
+    <div class="layer"><div class="tag">ส่วนประมวลผล<br>Backend</div><div class="body">Node.js + Express — ประมวลผลตรรกะทางธุรกิจ ควบคุมสิทธิ์การเข้าถึง และเป็นตัวกลางเดียวที่เชื่อมต่อฐานข้อมูล (ปกป้องคีย์ลับไม่ให้รั่วไหล)</div></div>
+    <div class="layer"><div class="tag">ฐานข้อมูล<br>Database</div><div class="body">Supabase (PostgreSQL) — จัดเก็บข้อมูลทุกตาราง และพื้นที่จัดเก็บไฟล์ (Storage) สำหรับเอกสารและรูปภาพ</div></div>
+  </div>
+  <p class="muted">สถาปัตยกรรมแบบ ๓ ชั้น (Three-tier) แยกส่วนแสดงผล ส่วนประมวลผล และฐานข้อมูลออกจากกันอย่างชัดเจน — ส่วนประมวลผลและฐานข้อมูลเป็นคนละบริการ หากส่วนประมวลผลขัดข้อง ข้อมูลในฐานข้อมูลยังคงปลอดภัยครบถ้วน</p>
+
+  <h3>เทคโนโลยีที่ใช้</h3>
+  <table>
+    <tr><th style="width:28%">ส่วนประกอบ</th><th>เทคโนโลยี</th><th style="width:32%">รูปแบบการให้บริการ</th></tr>
+    <tr><td>ส่วนแสดงผล (Frontend)</td><td>React, Vite, Tailwind CSS</td><td>Web Application</td></tr>
+    <tr><td>ส่วนประมวลผล (Backend)</td><td>Node.js, Express</td><td>Cloud Hosting (Render)</td></tr>
+    <tr><td>ฐานข้อมูล (Database)</td><td>PostgreSQL</td><td>Supabase (Cloud, มีระบบสำรองข้อมูล)</td></tr>
+    <tr><td>ที่จัดเก็บไฟล์ (Storage)</td><td>Supabase Storage</td><td>Cloud Object Storage</td></tr>
+  </table>
+
+  <h2>๕. ความปลอดภัยและความต่อเนื่องของระบบ</h2>
+  <ul>
+    <li><b>ควบคุมสิทธิ์การเข้าถึง</b> ตามบทบาทผู้ใช้ ๔ ระดับ และเข้ารหัสรหัสผ่านตามมาตรฐาน (bcrypt)</li>
+    <li><b>คีย์เชื่อมต่อฐานข้อมูล</b> ถูกเก็บฝั่งเซิร์ฟเวอร์เท่านั้น ไม่เปิดเผยต่อผู้ใช้</li>
+    <li><b>บันทึกการใช้งาน (Audit Log)</b> ตรวจสอบย้อนหลังได้ว่าใครทำรายการใด เมื่อใด</li>
+    <li><b>การสำรองข้อมูล</b> อัตโนมัติรายวันในระดับผู้ให้บริการฐานข้อมูล พร้อมเครื่องมือสำรองข้อมูลเสริมที่ควบคุมเอง</li>
+    <li><b>เป้าหมายการกู้คืน</b> ระบบกลับมาใช้งานได้ภายใน ~๒ ชั่วโมง (RTO) ข้อมูลย้อนหลังไม่เกิน ๒๔ ชั่วโมง (RPO)</li>
+  </ul>
+
+  <h2>๖. ประมาณการค่าใช้จ่ายในการดำเนินระบบ (ต่อเนื่อง)</h2>
+  <table>
+    <tr><th>รายการ</th><th style="width:26%">รูปแบบ</th><th style="width:26%">ประมาณการ/เดือน</th></tr>
+    <tr><td>ค่าบริการเซิร์ฟเวอร์ประมวลผล (Backend Hosting)</td><td>รายเดือน</td><td>~๒๕๐–๗๐๐ บาท</td></tr>
+    <tr><td>ค่าบริการฐานข้อมูล + สำรองข้อมูล (Database)</td><td>รายเดือน</td><td>~๙๐๐ บาท</td></tr>
+    <tr><td class="c" colspan="2"><b>รวมค่าดำเนินระบบโดยประมาณ</b></td><td><b>~๑,๒๐๐–๑,๖๐๐ บาท/เดือน</b></td></tr>
+  </table>
+  <div class="cost-note">หมายเหตุ: ประมาณการข้างต้นเป็นค่าโครงสร้างพื้นฐานคลาวด์สำหรับการใช้งานจริงระดับองค์กร (อัตราแลกเปลี่ยนโดยประมาณ) ยังไม่รวมค่าพัฒนา/ปรับแต่งระบบ ค่าดูแลบำรุงรักษา และค่าฝึกอบรม ซึ่งขึ้นกับข้อตกลงการให้บริการ</div>
+
+  <h2>๗. ข้อเสนอเพื่อการพิจารณา</h2>
+  <ul>
+    <li>ระบบพัฒนาเสร็จและใช้งานได้จริงแล้ว สามารถเริ่มใช้งานได้ทันทีหลังการเตรียมข้อมูลตั้งต้นและฝึกอบรม</li>
+    <li>ใช้โครงสร้างพื้นฐานแบบคลาวด์ ค่าใช้จ่ายคงที่รายเดือน ไม่ต้องลงทุนเซิร์ฟเวอร์ฮาร์ดแวร์</li>
+    <li>รองรับการต่อยอด เช่น การแจ้งเตือนผ่านอีเมล/LINE การเชื่อมต่อระบบ SAP และการขยายไปหลายหน่วยงาน</li>
+  </ul>
+
+  <div slot="footer" class="doc-foot">เอกสารนำเสนอระบบ THAMC e-Material — เพื่อประกอบการพิจารณาอนุมัติงบประมาณ</div>
+
+</doc-page>
+<script src="doc-page.js"></script>
+</body>
+</html>

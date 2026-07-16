@@ -85,58 +85,19 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           style={{ background: `radial-gradient(circle, ${ACCENT}88, transparent 70%)` }}
         />
 
-        <div className="relative flex items-center gap-3">
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-4">
           <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl"
-            style={{ background: ACCENT, boxShadow: `0 8px 24px ${ACCENT}73` }}
+            className="flex h-20 w-20 items-center justify-center rounded-2xl"
+            style={{ background: ACCENT, boxShadow: `0 12px 32px ${ACCENT}73` }}
           >
-            <Boxes className="h-6 w-6" strokeWidth={2.2} />
+            <Boxes className="h-10 w-10" strokeWidth={2.2} />
           </div>
-          <div>
-            <div className="text-base font-bold tracking-tight">THAMC e-Material</div>
-            <div className="text-[11px] tracking-wide" style={{ color: "#a5a1c9" }}>
+          <div className="text-center">
+            <div className="text-2xl font-bold tracking-tight">THAMC e-Material</div>
+            <div className="mt-1 text-sm tracking-wide" style={{ color: "#a5a1c9" }}>
               Inventory Management
             </div>
           </div>
-        </div>
-
-        <div className="relative">
-          <div
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11.5px] font-medium backdrop-blur"
-            style={{ color: "#d6d3f0" }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_0_3px_rgba(74,222,128,.25)]" />
-            ระบบเบิกจ่ายพัสดุศูนย์การแพทย์
-          </div>
-          <h1 className="m-0 mb-4 text-[38px] font-bold leading-[1.2] tracking-tight">
-            จัดการคลังพัสดุ
-            <br />
-            อย่างเป็นระบบ
-            <br />
-            <span style={{ color: "#b3aef7" }}>ตั้งแต่เบิกจนจ่าย</span>
-          </h1>
-          <p className="m-0 max-w-[380px] text-[14.5px] leading-[1.7]" style={{ color: "#b3afd6" }}>
-            เบิก–อนุมัติ–จ่ายของ ติดตามสถานะแบบเรียลไทม์ พร้อมรายงานและเอกสารครบวงจร
-            สำหรับฝ่ายการเงินและบัญชี
-          </p>
-        </div>
-
-        <div className="relative flex gap-7">
-          {[
-            ["3", "ระดับอนุมัติ"],
-            ["9", "โมดูลใช้งาน"],
-            ["100%", "ตรวจสอบย้อนหลัง"],
-          ].map(([n, l], i) => (
-            <div key={i} className="flex items-center gap-7">
-              {i > 0 && <div className="h-8 w-px bg-white/15" />}
-              <div>
-                <div className="text-2xl font-bold">{n}</div>
-                <div className="text-[11.5px]" style={{ color: "#a5a1c9" }}>
-                  {l}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
