@@ -25,23 +25,25 @@ const STORAGE_KEY = "thamc_user";
 
 type TabId = "announcements" | "dashboard" | "inventory" | "movement" | "requisition" | "approvals" | "goods-receipt" | "reports" | "good-issue-sap" | "purchasing" | "audit" | "history" | "admin" | "profile";
 
-interface NavItem { id: TabId; label: string; icon: React.ComponentType<any>; roles?: string[]; }
+interface NavItem { id: TabId; label: string; icon: React.ComponentType<any>; roles?: string[]; group?: string; }
 
 const NAV: NavItem[] = [
-  { id: "announcements", label: "ประกาศข่าวสาร", icon: Megaphone },
-  { id: "dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
-  { id: "requisition", label: "สร้างใบเบิก", icon: FilePlus2 },
-  { id: "history", label: "ประวัติใบเบิก", icon: HistoryIcon },
-  { id: "approvals", label: "อนุมัติใบเบิก", icon: ClipboardCheck, roles: ["Admin", "Manager", "Staff"] },
-  { id: "inventory", label: "คลังพัสดุ", icon: Package },
-  { id: "goods-receipt", label: "รับวัสดุเข้าคลัง", icon: PackagePlus, roles: ["Admin", "Manager", "Staff"] },
-  { id: "purchasing", label: "จุดสั่งซื้ออัตโนมัติ", icon: ShoppingCart, roles: ["Admin", "Manager", "Staff"] },
-  { id: "movement", label: "การเคลื่อนไหวพัสดุ", icon: ArrowLeftRight, roles: ["Admin", "Manager", "Staff"] },
-  { id: "reports", label: "รายงาน", icon: BarChart3, roles: ["Admin", "Manager", "Staff"] },
-  { id: "good-issue-sap", label: "Good Issue SAP", icon: FileSpreadsheet, roles: ["Admin", "Manager", "Staff"] },
-  { id: "audit", label: "บันทึกการใช้งาน", icon: ScrollText, roles: ["Admin"] },
-  { id: "admin", label: "ผู้ดูแลระบบ", icon: Shield, roles: ["Admin"] },
+  { id: "announcements", label: "ประกาศข่าวสาร", icon: Megaphone, group: "ภาพรวม" },
+  { id: "dashboard", label: "แดชบอร์ด", icon: LayoutDashboard, group: "ภาพรวม" },
+  { id: "requisition", label: "สร้างใบเบิก", icon: FilePlus2, group: "งานเบิกจ่าย" },
+  { id: "history", label: "ประวัติใบเบิก", icon: HistoryIcon, group: "งานเบิกจ่าย" },
+  { id: "approvals", label: "อนุมัติใบเบิก", icon: ClipboardCheck, roles: ["Admin", "Manager", "Staff"], group: "งานเบิกจ่าย" },
+  { id: "inventory", label: "คลังพัสดุ", icon: Package, group: "คลังและสต๊อก" },
+  { id: "goods-receipt", label: "รับวัสดุเข้าคลัง", icon: PackagePlus, roles: ["Admin", "Manager", "Staff"], group: "คลังและสต๊อก" },
+  { id: "purchasing", label: "จุดสั่งซื้ออัตโนมัติ", icon: ShoppingCart, roles: ["Admin", "Manager", "Staff"], group: "คลังและสต๊อก" },
+  { id: "movement", label: "การเคลื่อนไหวพัสดุ", icon: ArrowLeftRight, roles: ["Admin", "Manager", "Staff"], group: "คลังและสต๊อก" },
+  { id: "reports", label: "รายงาน", icon: BarChart3, roles: ["Admin", "Manager", "Staff"], group: "รายงานและข้อมูล" },
+  { id: "good-issue-sap", label: "Good Issue SAP", icon: FileSpreadsheet, roles: ["Admin", "Manager", "Staff"], group: "รายงานและข้อมูล" },
+  { id: "audit", label: "บันทึกการใช้งาน", icon: ScrollText, roles: ["Admin"], group: "ตั้งค่าระบบ" },
+  { id: "admin", label: "ผู้ดูแลระบบ", icon: Shield, roles: ["Admin"], group: "ตั้งค่าระบบ" },
 ];
+
+const GROUP_ORDER = ["ภาพรวม", "งานเบิกจ่าย", "คลังและสต๊อก", "รายงานและข้อมูล", "ตั้งค่าระบบ"];
 
 export default function App() {
   const [user, setUser] = useState<User | null>(() => {
@@ -83,17 +85,24 @@ export default function App() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {visibleNav.map((n) => {
-          const Icon = n.icon;
-          const active = tab === n.id;
-          return (
-            <button key={n.id} onClick={() => go(n.id)}
-              className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border-none px-3.5 py-2.5 text-left text-sm font-medium transition ${active ? "bg-[#5b4df6] text-white shadow-[0_6px_18px_-8px_rgba(91,77,246,.8)]" : "bg-transparent text-slate-300 hover:bg-white/5 hover:text-white"}`}>
-              <Icon className="h-[18px] w-[18px] shrink-0" />{n.label}
-            </button>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
+        {GROUP_ORDER.filter((g) => visibleNav.some((n) => n.group === g)).map((g) => (
+          <div key={g} className="mb-3">
+            <div className="px-3.5 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">{g}</div>
+            <div className="space-y-1">
+              {visibleNav.filter((n) => n.group === g).map((n) => {
+                const Icon = n.icon;
+                const active = tab === n.id;
+                return (
+                  <button key={n.id} onClick={() => go(n.id)}
+                    className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border-none px-3.5 py-2.5 text-left text-sm font-medium transition ${active ? "bg-[#5b4df6] text-white shadow-[0_6px_18px_-8px_rgba(91,77,246,.8)]" : "bg-transparent text-slate-300 hover:bg-white/5 hover:text-white"}`}>
+                    <Icon className="h-[18px] w-[18px] shrink-0" />{n.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="border-t border-white/10 p-3">
